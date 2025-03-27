@@ -23,7 +23,7 @@ const PostCard = ({ post }: { post: PostItem }) => {
       className="align-self-baseline col-lg-4 d-flex flex-column justify-content-between scale-95 hover:scale-100 ease-in duration-100"
     >
       {post.image && (
-        <div className="rounded mx-auto w-1/2 shadow">
+        <div className="rounded mx-auto shadow">
           <picture>
             <img
               src={`${post.image}`}
@@ -41,7 +41,7 @@ const PostCard = ({ post }: { post: PostItem }) => {
         </div>
       )}
       {!post.image && (
-        <div className="px-2 py-3 mt-auto mx-auto w-1/2 shadow rounded">
+        <div className="px-2 py-3 mt-auto mx-auto shadow rounded">
           <h2 className="font-bold text-lg">{post.title}</h2>
           <span className="badge bg-secondary text-white">{post.date}</span>
         </div>

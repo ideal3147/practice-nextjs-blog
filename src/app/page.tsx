@@ -9,7 +9,7 @@ export default async function Home() {
 
   return (
     <div className="container">
-      <div className="row">
+      <div className="flex flex-col align-top min-h-screen w-1/2 justify-center align-center mx-auto">
         {posts.slice(pageData.start, pageData.end).map((post) => (
           <PostCard key={post.slug} post={post} />
         ))}
