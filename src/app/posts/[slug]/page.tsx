@@ -132,7 +132,7 @@ export default async function Post({ params }: Props) {
         </div>
         <div className="row">
           <div
-            className={"markdown-content col-md-12"}
+            className={"markdown-content prose col-md-12"}
             dangerouslySetInnerHTML={{ __html: postData.contentHtml }}
           ></div>
         </div>
