@@ -105,9 +105,9 @@ export default async function Post({ params }: Props) {
 
   return (
     <>
-      <div className="max-w-none">
+      <div className="prose max-w-none m-8">
         {postData.image && (
-          <div className="flex border justify-center mb-3">
+          <div className="flex shadow justify-center mb-3">
             <picture>
               <img
                 src={`${postData.image}`}
