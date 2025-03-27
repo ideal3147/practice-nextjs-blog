@@ -50,7 +50,7 @@ const Pagination = ({ type, pages, currentPage = 1 }: PageProps) => {
   }
 
   return (
-    <ul className="pagination justify-content-center">
+    <ul className="pagination text-center">
       {startPage > 1 && (
         <>
           <li className="page-item">
