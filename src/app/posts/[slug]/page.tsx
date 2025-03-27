@@ -125,7 +125,7 @@ export default async function Post({ params }: Props) {
         <div className="space-x-2">
           {postData?.tags &&
             postData.tags?.map((category) => (
-              <span key={category} className="badge bg-secondary">
+              <span key={category} className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-gray-700 dark:text-gray-400 border border-gray-400 inline-flex items-center justify-center">
                 <Link href={`/tags/${category}`}>{category}</Link>
               </span>
             ))}
