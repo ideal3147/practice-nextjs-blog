@@ -1,6 +1,7 @@
 import PostCard from "../components/PostCard";
 import Pagination from "../components/Pagination";
 import { PageData, createPageData, getPostData } from "./lib/functions";
+import Link from "next/link";
 
 export default async function Home() {
   const posts = await getPostData();
@@ -22,6 +23,10 @@ export default async function Home() {
           currentPage={pageData.currentPage}
         />
       </div>
+
+      <Link href="/new-post" className="fixed bottom-15 right-10 bg-blue-500 text-white px-6 py-4 rounded-full shadow-lg hover:bg-blue-600 text-xl">
+          +
+      </Link>
     </div>
   );
 }

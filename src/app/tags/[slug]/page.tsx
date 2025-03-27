@@ -3,6 +3,7 @@ import { PostItem } from "../../lib/types";
 import { Metadata, ResolvingMetadata } from "next";
 import { PageData, createPageData, getPostData, getTagsData } from "../../lib/functions";
 import Pagination from "../../../components/Pagination";
+import Link from "next/link";
 
 type Props = {
   params: { slug: string }
@@ -94,6 +95,10 @@ export default async function TagPage({ params }: { params: { slug: string } }) 
         <div className='mb-3'>
           <Pagination type={`tags/${params.slug}`} pages={pageData.pages} currentPage={pageData.currentPage} />
         </div>
+
+        <Link href="/new-post" className="fixed bottom-15 right-10 bg-blue-500 text-white px-6 py-4 rounded-full shadow-lg hover:bg-blue-600 text-xl">
+          +
+        </Link>
       </div>
     </>
   );
