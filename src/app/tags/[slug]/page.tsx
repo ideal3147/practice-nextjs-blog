@@ -85,7 +85,7 @@ export default async function TagPage({ params }: { params: { slug: string } }) 
   return (
     <>
       <div className="my-8">
-        <div className="row">
+        <div className="flex flex-col align-top min-h-screen w-1/2 justify-center align-center mx-auto">
           {posts.slice(pageData.start, pageData.end).map((post) => (
             <PostCard key={post.title} post={post} />
           ))}
