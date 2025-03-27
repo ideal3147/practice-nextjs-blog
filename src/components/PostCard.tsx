@@ -23,7 +23,7 @@ const PostCard = ({ post }: { post: PostItem }) => {
       className="align-self-baseline col-lg-4 d-flex flex-column justify-content-between scale-95 hover:scale-100 ease-in duration-100"
     >
       {post.image && (
-        <div className="border rounded-lg mx-auto">
+        <div className="rounded mx-auto w-1/2 shadow">
           <picture>
             <img
               src={`${post.image}`}
@@ -34,12 +34,18 @@ const PostCard = ({ post }: { post: PostItem }) => {
               style={{ maxWidth: "100%", height: "224px" }}
             />
           </picture>
+          <div className="px-2 py-3 mt-auto mx-auto">
+            <h2 className="font-bold text-lg">{post.title}</h2>
+            <span className="badge bg-secondary text-white">{post.date}</span>
+          </div>
         </div>
       )}
-      <div className="px-2 py-3 mt-auto">
-        <h1 className="font-bold text-lg">{post.title}</h1>
-        <span className="badge bg-secondary text-white">{post.date}</span>
-      </div>
+      {!post.image && (
+        <div className="px-2 py-3 mt-auto mx-auto w-1/2 shadow rounded">
+          <h2 className="font-bold text-lg">{post.title}</h2>
+          <span className="badge bg-secondary text-white">{post.date}</span>
+        </div>
+      )}
     </Link>
   );
 };
