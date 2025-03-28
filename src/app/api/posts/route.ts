@@ -1,9 +1,43 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: Request) {
-  const { title, content } = await request.json();
+  
+  const formData = await request.formData();
+  const title = formData.get("title") as string;
+  const content = formData.get("content") as string;
+  const thumbnail = formData.get("thumbnail") as File | null;
+
+  if (!title || !content) {
+    return NextResponse.json(
+      { error: "タイトルと本文は必須です。" },
+      { status: 400 }
+    );
+  }
+
+  let thumbnailUrl = "";
+  if (thumbnail) {
+    // サムネイル画像を保存
+    const uploadsDir = path.join(process.cwd(), "public", "images", "thumbnails");
+
+    // アップロードディレクトリが存在しない場合は作成
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    // ファイル名を生成（UUIDを使用）
+    const fileName = `${uuidv4()}-${thumbnail.name}`;
+    const filePath = path.join(uploadsDir, fileName);
+
+    // ファイルを保存
+    const buffer = Buffer.from(await thumbnail.arrayBuffer());
+    fs.writeFileSync(filePath, buffer);
+
+    // サムネイル画像のURLを生成
+    thumbnailUrl = `/images/thumbnails/${fileName}`;
+  }
 
   // タイムスタンプを生成
   const timestamp = new Date()
@@ -31,6 +65,7 @@ export async function POST(request: Request) {
 `---
 title: ${title}
 date: "${timestamp}"
+image: ${thumbnailUrl || ""}
 ---
 
 ${content}

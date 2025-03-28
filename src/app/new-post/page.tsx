@@ -49,6 +49,13 @@ export default function NewPostPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setThumbnail(e.target.files[0]);
+    }
+  };
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData.items;
@@ -84,18 +91,23 @@ export default function NewPostPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("content", content);
+    if (thumbnail) {
+      formData.append("thumbnail", thumbnail);
+    }
+
     // APIルートにデータを送信
     const response = await fetch("/api/posts", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ title, content }),
+      body: formData,
     });
 
     if (response.ok) {
       setTitle("");
       setContent("");
+      setThumbnail(null);
       alert("記事が保存されました！");
     } else {
       alert("記事の保存に失敗しました。");
@@ -136,6 +148,23 @@ export default function NewPostPage() {
             className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="記事のタイトルを入力してください"
             required
+          />
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="thumbnail"
+            className="block text-lg font-medium text-gray-700 mb-2"
+          >
+            サムネイル画像
+          </label>
+          <input
+            type="file"
+            id="thumbnail"
+            name="thumbnail"
+            accept="image/*"
+            onChange={handleThumbnailChange}
+            className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
