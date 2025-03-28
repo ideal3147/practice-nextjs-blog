@@ -166,12 +166,6 @@ export default function NewPostPage() {
 
         {mode === "edit" && (
           <div className="mb-4">
-            <label
-              htmlFor="content"
-              className="block text-lg font-medium text-gray-700 mb-2"
-            >
-              本文
-            </label>
             <textarea
               id="content"
               name="content"
@@ -179,7 +173,7 @@ export default function NewPostPage() {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               onPaste={handlePaste}
-              className="w-full border min-h-[200px] border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border min-h-[200px] h-1 border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="記事の内容を入力してください"
               required
             ></textarea>
@@ -188,8 +182,10 @@ export default function NewPostPage() {
 
         {/* プレビューモード */}
         {mode === "preview" && (
-          <div className="prose mb-4 border border-gray-300 rounded p-4">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          <div className="mb-4">
+            <div className="prose !max-w-none border !min-h-[200px] border-gray-300 rounded px-4 py-2">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+            </div>
           </div>
         )}
 
