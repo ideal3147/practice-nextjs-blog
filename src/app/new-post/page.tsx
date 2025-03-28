@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function NewPostPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [mode, setMode] = useState<"edit" | "preview">("edit");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +34,16 @@ export default function NewPostPage() {
   return (
     <div className="container mx-auto my-8">
       <h1 className="text-4xl font-bold text-center mb-4">新しい記事を登録</h1>
+      
+      <div className="max-w-2xl mb-4 mx-auto">
+        <Link
+          href="/"
+          className="text-blue-500 hover:underline text-lg font-medium "
+        >
+          戻る
+        </Link>
+      </div>
+
       <form
         className="max-w-2xl mx-auto bg-white p-6 rounded shadow-md"
         onSubmit={handleSubmit}
@@ -54,25 +68,58 @@ export default function NewPostPage() {
           />
         </div>
 
-        {/* 文章入力欄 */}
-        <div className="mb-4">
-          <label
-            htmlFor="content"
-            className="block text-lg font-medium text-gray-700 mb-2"
+        <div className="mb-4 flex border-b">
+          <button
+            type="button"
+            onClick={() => setMode("edit")}
+            className={`px-4 py-2 ${
+              mode === "edit"
+                ? "border-b-2 border-blue-500 text-blue-500"
+                : "text-gray-500"
+            }`}
           >
-            本文
-          </label>
-          <textarea
-            id="content"
-            name="content"
-            rows={10}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full border min-h-[200px] border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="記事の内容を入力してください"
-            required
-          ></textarea>
+            編集
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("preview")}
+            className={`px-4 py-2 ${
+              mode === "preview"
+                ? "border-b-2 border-blue-500 text-blue-500"
+                : "text-gray-500"
+            }`}
+          >
+            プレビュー
+          </button>
         </div>
+
+        {mode === "edit" && (
+          <div className="mb-4">
+            <label
+              htmlFor="content"
+              className="block text-lg font-medium text-gray-700 mb-2"
+            >
+              本文
+            </label>
+            <textarea
+              id="content"
+              name="content"
+              rows={10}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full border min-h-[200px] border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="記事の内容を入力してください"
+              required
+            ></textarea>
+          </div>
+        )}
+
+        {/* プレビューモード */}
+        {mode === "preview" && (
+          <div className="prose mb-4 border border-gray-300 rounded p-4">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          </div>
+        )}
 
         {/* 登録ボタン */}
         <div className="text-center">
