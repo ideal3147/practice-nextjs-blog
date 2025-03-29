@@ -5,7 +5,7 @@ import { POSTS_PER_PAGE } from "../../lib/constants";
 import { PageData, createPageData, getPostData } from "../../lib/functions";
 
 type Props = {
-  params: { page: number };
+  params: Promise<{ page: number }>;
 };
 
 /**
@@ -17,10 +17,8 @@ type Props = {
  * @returns {Promise<Metadata>} A promise that resolves to the metadata object
  * including the title and description for the blog post.
  */
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata(props: Props, parent: ResolvingMetadata): Promise<Metadata> {
+  const params = await props.params;
   const title = `${params.page}ページ目`;
   return {
     title: `${title} | ブログタイトル`,
@@ -55,7 +53,8 @@ export async function generateStaticParams() {
  * @param {string} slug - The unique identifier for the blog post.
  * @returns {Promise<PostItem>} A promise that resolves to the post data object.
  */
-export default async function Page({ params }: { params: { page: number } }) {
+export default async function Page(props: { params: Promise<{ page: number }> }) {
+  const params = await props.params;
   const posts = await getPostData();
 
   const pageData: PageData = createPageData(params.page, posts.length);

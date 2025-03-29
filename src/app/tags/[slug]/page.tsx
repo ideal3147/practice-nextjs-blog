@@ -6,7 +6,7 @@ import Pagination from "../../../components/Pagination";
 import Link from "next/link";
 
 type Props = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 /**
@@ -22,7 +22,8 @@ type Props = {
  * - `title`: A string combining the decoded tag and a fixed blog title.
  * - `description`: A string containing the decoded tag.
  */
-export async function generateMetadata({ params }: Props, parent: ResolvingMetadata): Promise<Metadata> {
+export async function generateMetadata(props: Props, parent: ResolvingMetadata): Promise<Metadata> {
+  const params = await props.params;
   const tag = decodeURIComponent(params.slug);
   return {
     title: `${tag} | ブログタイトル`,
@@ -75,7 +76,8 @@ export async function generateStaticParams() {
  *
  * @async
  */
-export default async function TagPage({ params }: { params: { slug: string } }) {
+export default async function TagPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const posts = await getTagsData(params.slug);
 
   const pageData: PageData = createPageData(

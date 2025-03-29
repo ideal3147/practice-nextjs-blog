@@ -1,97 +1,23 @@
-import fs from "fs";
-import path from "path";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import React from "react";
-import matter from "gray-matter";
-import { remark } from "remark";
-import html from "remark-html";
-import { rehype } from "rehype";
-import rehypeRaw from "rehype-raw";
-import rehypePrism from "rehype-prism-plus";
-import rehypeStringify from "rehype-stringify";
-import rehypeExternalLinks from "rehype-external-links";
-import { PostItem } from "../../lib/types";
-import { Metadata, ResolvingMetadata } from "next";
-import { getPostData } from "../../lib/functions";
+
 
 type Props = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
-
-/**
- * Generates metadata for a blog post page based on the provided slug.
- *
- * @param {Object} params - The parameters object containing the slug of the post.
- * @param {string} params.slug - The unique identifier for the blog post.
- * @param {ResolvingMetadata} parent - The parent metadata object being resolved.
- * @returns {Promise<Metadata>} A promise that resolves to the metadata object
- * including the title and description for the blog post.
- */
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  const post = await createPostData(params.slug);
-  return {
-    title: `${post.title} | ブログタイトル`,
-    description: `${post.description ?? post.title}`,
-  };
-}
-
-/**
- * Generates static paths for all blog posts.
- *
- * @returns {Promise<Array<{ path: string, slug: string }>>} A promise that resolves to an array of
- * objects containing the path and slug for each blog post.
- */
-export async function generateStaticParams() {
-  const postsDirectory = path.join(process.cwd(), "src", "posts");
-  const filenames = fs.readdirSync(postsDirectory);
-  const posts = await getPostData();
-  return posts.map((post: PostItem) => {
-    return {
-      path: `/posts/${post.slug}`,
-      slug: post.slug,
-    };
-  });
-}
-
-/**
- * Creates the post data for a given slug.
- *
- * @param {string} slug - The unique identifier for the blog post.
- * @returns {Promise<PostItem>} A promise that resolves to the post data object.
- */
-async function createPostData(slug: string): Promise<PostItem> {
-  const filePath = path.join(process.cwd(), "src", "posts", `${slug}.md`);
-  const fileContents = fs.readFileSync(filePath, "utf8");
-  const { data, content } = matter(fileContents);
-
-  const processedContent = await remark()
-    .use(html, { sanitize: false })
-    .process(content);
-
-  const contentHtml = processedContent.toString();
-
-  const rehypedContent = await rehype()
-    .data("settings", { fragment: true })
-    .use(rehypeRaw)
-    .use(rehypePrism)
-    .use(rehypeExternalLinks, { target: "_blank", rel: ["nofollow"] })
-    .use(rehypeStringify)
-    .process(contentHtml);
-
-  return {
-    slug: slug,
-    title: data.title,
-    description: data.description,
-    date: data.date,
-    image: data.image,
-    tags: data.tags,
-    contentHtml: rehypedContent.value.toString(),
-  };
-}
+type PostData = {
+  slug: string;
+  title: string;
+  description: string;
+  date: string;
+  image: string;
+  tags: string[];
+  contentHtml: string;
+};
 
 /**
  * The component for rendering a blog post page.
@@ -100,14 +26,78 @@ async function createPostData(slug: string): Promise<PostItem> {
  * @param {Props.params} props.params - The parameters object containing the slug of the post.
  * @returns {JSX.Element} The component for rendering a blog post page.
  */
-export default async function Post({ params }: Props) {
-  const postData = await createPostData(params.slug);
+export default function Post({ params }: Props) {
+
+  const [postData, setPostData] = useState<PostData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchPostData = async () => {
+      try {
+        const response = await fetch(`/api/posts/${(await params).slug}`);
+        if (!response.ok) {
+          throw new Error("記事データの取得に失敗しました。");
+        }
+        const data = await response.json();
+        setPostData(data);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("予期しないエラーが発生しました。");
+        }
+      }
+    };
+
+    fetchPostData();
+  }, []);
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm("本当に削除してよろしいですか？");
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+
+    const response = await fetch(`/api/posts/${(await params).slug}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
+      alert("記事が削除されました。");
+      router.push("/"); // ウェルカムページにリダイレクト
+    } else {
+      alert("記事の削除に失敗しました。");
+    }
+
+    setIsDeleting(false);
+  };
+
+  if (error) {
+    return <div className="text-red-500">エラー: {error}</div>;
+  }
+
+  if (!postData) {
+    return <div>読み込み中...</div>;
+  }
 
   return (
     <>
-      <div className="prose max-w-none m-8">
+      <div className="max-w-none">
+
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handleDelete}
+            className="bg-red-500 text-white px-4 py-2 rounded shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+            disabled={isDeleting}
+          >
+            {isDeleting ? "削除中..." : "削除"}
+          </button>
+        </div>
+        
         {postData.image && (
-          <div className="flex shadow justify-center mb-3">
+          <div className="flex border justify-center mb-3">
             <picture>
               <img
                 src={`${postData.image}`}
@@ -125,7 +115,7 @@ export default async function Post({ params }: Props) {
         <div className="space-x-2">
           {postData?.tags &&
             postData.tags?.map((category) => (
-              <span key={category} className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-gray-700 dark:text-gray-400 border border-gray-400 inline-flex items-center justify-center">
+              <span key={category} className="badge bg-secondary">
                 <Link href={`/tags/${category}`}>{category}</Link>
               </span>
             ))}

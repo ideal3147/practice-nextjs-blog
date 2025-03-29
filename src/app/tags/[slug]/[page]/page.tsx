@@ -10,7 +10,7 @@ import {
 import Pagination from "../../../../components/Pagination";
 
 type Props = {
-  params: { slug: string; page: number };
+  params: Promise<{ slug: string; page: number }>;
 };
 
 /**
@@ -23,10 +23,8 @@ type Props = {
  * The title is formatted as "{tag} - {page}ページ目 | Nemutai".
  * The description is set to the decoded tag value.
  */
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata(props: Props, parent: ResolvingMetadata): Promise<Metadata> {
+  const params = await props.params;
   const tag = decodeURIComponent(params.slug);
   const title = `${tag} - ${params.page}ページ目 | Nemutai`;
   return {
@@ -101,11 +99,12 @@ export async function generateStaticParams() {
  * @param {Props} params - The parameters containing the slug (tag) and page number.
  * @returns {Promise<PostItem[]>} A promise that resolves to an array of PostItem objects.
  */
-export default async function TagPage({
-  params,
-}: {
-  params: { slug: string; page: number };
-}) {
+export default async function TagPage(
+  props: {
+    params: Promise<{ slug: string; page: number }>;
+  }
+) {
+  const params = await props.params;
   const posts = await getTagsData(params.slug);
 
   const pageData: PageData = createPageData(params.page, posts.length);
