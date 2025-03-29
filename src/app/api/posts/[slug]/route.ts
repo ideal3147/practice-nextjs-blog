@@ -61,3 +61,41 @@ export async function GET(
     );
   }
 }
+
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const slug = (await params).slug;
+
+    // 記事ファイルのパス
+    const postFilePath = path.join(process.cwd(), "src", "posts", `${slug}.md`);
+
+    // 記事ファイルが存在するか確認
+    if (!fs.existsSync(postFilePath)) {
+      return NextResponse.json({ error: "記事が見つかりません。" }, { status: 404 });
+    }
+
+    // 記事ファイルを削除
+    fs.unlinkSync(postFilePath);
+
+    // サムネイル画像の削除
+    // const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    // const files = fs.readdirSync(uploadsDir);
+    // files.forEach((file) => {
+    //   if (file.startsWith(slug)) {
+    //     fs.unlinkSync(path.join(uploadsDir, file));
+    //   }
+    // });
+
+    return NextResponse.json({ message: "記事が削除されました。" });
+  } catch (error) {
+    console.error("削除中にエラーが発生しました:", error);
+    return NextResponse.json(
+      { error: "記事の削除中にエラーが発生しました。" },
+      { status: 500 }
+    );
+  }
+}

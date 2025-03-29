@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 
@@ -26,10 +27,11 @@ type PostData = {
  * @returns {JSX.Element} The component for rendering a blog post page.
  */
 export default function Post({ params }: Props) {
-  // const postData = await createPostData(params.slug);
 
   const [postData, setPostData] = useState<PostData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchPostData = async () => {
@@ -52,6 +54,26 @@ export default function Post({ params }: Props) {
     fetchPostData();
   }, []);
 
+  const handleDelete = async () => {
+    const confirmed = window.confirm("本当に削除してよろしいですか？");
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+
+    const response = await fetch(`/api/posts/${(await params).slug}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
+      alert("記事が削除されました。");
+      router.push("/"); // ウェルカムページにリダイレクト
+    } else {
+      alert("記事の削除に失敗しました。");
+    }
+
+    setIsDeleting(false);
+  };
+
   if (error) {
     return <div className="text-red-500">エラー: {error}</div>;
   }
@@ -63,6 +85,17 @@ export default function Post({ params }: Props) {
   return (
     <>
       <div className="max-w-none">
+
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handleDelete}
+            className="bg-red-500 text-white px-4 py-2 rounded shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+            disabled={isDeleting}
+          >
+            {isDeleting ? "削除中..." : "削除"}
+          </button>
+        </div>
+        
         {postData.image && (
           <div className="flex border justify-center mb-3">
             <picture>
