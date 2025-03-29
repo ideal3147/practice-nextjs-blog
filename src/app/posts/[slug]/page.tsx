@@ -15,7 +15,7 @@ import { Metadata, ResolvingMetadata } from "next";
 import { getPostData } from "../../lib/functions";
 
 type Props = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 
@@ -28,10 +28,8 @@ type Props = {
  * @returns {Promise<Metadata>} A promise that resolves to the metadata object
  * including the title and description for the blog post.
  */
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata(props: Props, parent: ResolvingMetadata): Promise<Metadata> {
+  const params = await props.params;
   const post = await createPostData(params.slug);
   return {
     title: `${post.title} | ブログタイトル`,
@@ -100,7 +98,8 @@ async function createPostData(slug: string): Promise<PostItem> {
  * @param {Props.params} props.params - The parameters object containing the slug of the post.
  * @returns {JSX.Element} The component for rendering a blog post page.
  */
-export default async function Post({ params }: Props) {
+export default async function Post(props: Props) {
+  const params = await props.params;
   const postData = await createPostData(params.slug);
 
   return (
