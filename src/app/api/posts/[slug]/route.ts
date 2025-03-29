@@ -82,13 +82,13 @@ export async function DELETE(
     fs.unlinkSync(postFilePath);
 
     // サムネイル画像の削除
-    // const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    // const files = fs.readdirSync(uploadsDir);
-    // files.forEach((file) => {
-    //   if (file.startsWith(slug)) {
-    //     fs.unlinkSync(path.join(uploadsDir, file));
-    //   }
-    // });
+    const uploadsDir = path.join(process.cwd(), "public", "images", "thumbnails");
+    const files = fs.readdirSync(uploadsDir);
+    files.forEach((file) => {
+      if (file.startsWith(slug)) {
+        fs.unlinkSync(path.join(uploadsDir, file));
+      }
+    });
 
     return NextResponse.json({ message: "記事が削除されました。" });
   } catch (error) {

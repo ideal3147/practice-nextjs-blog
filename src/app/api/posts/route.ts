@@ -17,6 +17,19 @@ export async function POST(request: Request) {
     );
   }
 
+  // src/postsフォルダのパス
+  const postsDir = path.join(process.cwd(), "src", "posts");
+
+  // タイムスタンプを生成
+  const timestamp = new Date()
+  .toISOString()
+  .replace(/[-:.TZ]/g, "")
+  .slice(0, 12); // yyyymmddhhmm形式
+
+  // 既存のファイル数を取得して連番を生成
+  const files = fs.readdirSync(postsDir);
+  const postNumber = files.length + 1;
+
   let thumbnailUrl = "";
   if (thumbnail) {
     // サムネイル画像を保存
@@ -27,8 +40,7 @@ export async function POST(request: Request) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    // ファイル名を生成（UUIDを使用）
-    const fileName = `${uuidv4()}-${thumbnail.name}`;
+    const fileName = `post${postNumber}-${timestamp}.png`;
     const filePath = path.join(uploadsDir, fileName);
 
     // ファイルを保存
@@ -39,23 +51,10 @@ export async function POST(request: Request) {
     thumbnailUrl = `/images/thumbnails/${fileName}`;
   }
 
-  // タイムスタンプを生成
-  const timestamp = new Date()
-    .toISOString()
-    .replace(/[-:.TZ]/g, "")
-    .slice(0, 12); // yyyymmddhhmm形式
-
-  // src/postsフォルダのパス
-  const postsDir = path.join(process.cwd(), "src", "posts");
-
   // フォルダが存在しない場合は作成
   if (!fs.existsSync(postsDir)) {
     fs.mkdirSync(postsDir, { recursive: true });
   }
-
-  // 既存のファイル数を取得して連番を生成
-  const files = fs.readdirSync(postsDir);
-  const postNumber = files.length + 1;
 
   // ファイル名を生成
   const fileName = `post${postNumber}-${timestamp}.md`;
