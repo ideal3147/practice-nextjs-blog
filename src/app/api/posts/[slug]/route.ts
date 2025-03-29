@@ -90,6 +90,8 @@ export async function DELETE(
       }
     });
 
+    // TODO: 挿入画像の削除処理
+
     return NextResponse.json({ message: "記事が削除されました。" });
   } catch (error) {
     console.error("削除中にエラーが発生しました:", error);
