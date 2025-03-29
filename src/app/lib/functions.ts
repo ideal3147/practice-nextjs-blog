@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { POSTS_PER_PAGE } from "./constants";
-import { PageData, PostItem } from "./types";
+import { PageData, PostItem } from "./types/types";
 import matter from "gray-matter";
 
 /**

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PostItem } from "../app/lib/types";
+import { PostItem } from "../app/lib/types/types";
 
 /**
  * A React component that renders a card for a blog post.

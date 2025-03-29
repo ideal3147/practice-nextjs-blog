@@ -1,5 +1,5 @@
 import PostCard from "../../../../components/PostCard";
-import { PostItem } from "../../../lib/types";
+import { PostItem } from "../../../lib/types/types";
 import { Metadata, ResolvingMetadata } from "next";
 import {
   PageData,
