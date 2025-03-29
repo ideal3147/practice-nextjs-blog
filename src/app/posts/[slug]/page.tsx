@@ -54,6 +54,10 @@ export default function Post({ params }: Props) {
     fetchPostData();
   }, []);
 
+  const handleEdit = async () => {
+    router.push(`/posts/${(await params).slug}/edit`)
+  }
+
   const handleDelete = async () => {
     const confirmed = window.confirm("本当に削除してよろしいですか？");
     if (!confirmed) return;
@@ -85,6 +89,15 @@ export default function Post({ params }: Props) {
   return (
     <>
       <div className="max-w-none">
+
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handleEdit}
+            className="border border-blue-500 text-blue-500 px-4 py-2 rounded shadow hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            編集する
+          </button>
+        </div>
 
         <div className="flex justify-end mb-4">
           <button

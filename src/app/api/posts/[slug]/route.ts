@@ -51,6 +51,7 @@ export async function GET(
       date: data.date,
       image: data.image,
       tags: data.tags,
+      content: content,
       contentHtml: rehypedContent.value.toString(),
     });
   } catch (error) {
@@ -62,6 +63,81 @@ export async function GET(
   }
 }
 
+
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  try {
+
+    const formData = await request.formData();
+    const title = formData.get("title") as string;
+    const date = formData.get("date") as string;
+    const content = formData.get("content") as string;
+    const isThumbnailChange = formData.get("isThumbnailChange") as string;
+    const thumbnail = formData.get("thumbnail") as File | null;
+
+    if (!title || !content) {
+      return NextResponse.json(
+        { error: "タイトルと本文は必須です。" },
+        { status: 400 }
+      );
+    }
+
+    const slug = (await params).slug;
+    const filePath = path.join(process.cwd(), "src", "posts", `${slug}.md`);
+
+    if (!fs.existsSync(filePath)) {
+      return NextResponse.json({ error: "記事が見つかりません。" }, { status: 404 });
+    }
+
+    let thumbnailUrl = "";
+    if (isThumbnailChange) {
+
+      // サムネイル画像を保存
+      const uploadsDir = path.join(process.cwd(), "public", "images", "thumbnails");
+  
+      // アップロードディレクトリが存在しない場合は作成
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+  
+      const filePath = path.join(uploadsDir, `${slug}.png`);
+
+      // ファイルを保存
+      if (thumbnail && thumbnail instanceof File) {
+        const buffer = Buffer.from(await thumbnail.arrayBuffer());
+        fs.writeFileSync(filePath, buffer);
+        thumbnailUrl = `/images/thumbnails/${slug}.png`;
+      }
+    }
+
+    if (isThumbnailChange === 'false') {
+      if (fs.existsSync(filePath)) {
+        thumbnailUrl = `/images/thumbnails/${slug}.png`;
+      }
+    }
+
+    const markdownContent = 
+`---
+title: ${title}
+date: "${date}"
+image: ${thumbnailUrl || ""}
+---
+
+${content}`;
+
+    fs.writeFileSync(filePath, markdownContent);
+
+    return NextResponse.json({ message: "記事が保存されました。" });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "記事の保存中にエラーが発生しました。" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function DELETE(
   request: Request,
