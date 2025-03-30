@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const fileName = `${uuidv4()}-${file.name}`;
 
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   // storageに画像ファイルをアップロード
   const {data, error: uploadError } = await supabase.storage
