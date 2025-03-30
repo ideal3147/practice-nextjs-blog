@@ -9,6 +9,8 @@ import rehypeRaw from "rehype-raw";
 import rehypePrism from "rehype-prism-plus";
 import rehypeStringify from "rehype-stringify";
 import rehypeExternalLinks from "rehype-external-links";
+import { createClient } from "@/utils/supabase/server";
+
 
 export async function GET(
   request: Request,
@@ -17,16 +19,21 @@ export async function GET(
   try {
     const slug = (await params).slug;
 
-    // 記事ファイルのパス
-    const filePath = path.join(process.cwd(), "src", "posts", `${slug}.md`);
+    // supabase storageから記事ファイルを取得する
+    const supabase = await createClient();
+    const { data, error } = await supabase.storage
+    .from("md-blog")
+    .download(`articles/${slug}.md`);
 
-    // 記事ファイルを読み込む
-    if (!fs.existsSync(filePath)) {
+    if (error) {
+      console.error("Error fetching data from Supabase:", error.message);
       return NextResponse.json({ error: "記事が見つかりません。" }, { status: 404 });
     }
 
-    const fileContents = fs.readFileSync(filePath, "utf8");
-    const { data, content } = matter(fileContents);
+    // 記事を読み込む
+    const fileBuffer = await data.arrayBuffer();
+    const fileContents = Buffer.from(fileBuffer).toString("utf-8");
+    const { data: frontMatterData, content } = matter(fileContents);
 
     // MarkdownをHTMLに変換
     const processedContent = await remark()
@@ -44,13 +51,28 @@ export async function GET(
       .use(rehypeStringify)
       .process(contentHtml);
 
+      // サムネイル画像のURLを取得
+      const { data: thumbnailUrl, error: thumbnailError } = await supabase
+      .from("m_articles")
+      .select(
+        "thumbnail_url"
+      ).eq("article_id", slug)
+      .single();
+
+      if (thumbnailError) {
+        console.error("Error fetching thumbnail from Supabase:", thumbnailError.message);
+      }
+      if (thumbnailUrl) {
+        frontMatterData.image = thumbnailUrl.thumbnail_url;
+      }
+
     return NextResponse.json({
       slug,
-      title: data.title,
-      description: data.description,
-      date: data.date,
-      image: data.image,
-      tags: data.tags,
+      title: frontMatterData.title,
+      description: frontMatterData.description,
+      date: frontMatterData.date,
+      image: frontMatterData.image,
+      tags: frontMatterData.tags,
       content: content,
       contentHtml: rehypedContent.value.toString(),
     });
