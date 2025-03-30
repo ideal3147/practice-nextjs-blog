@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import { createClient } from "@/utils/supabase/server";
 
 /**
  * Handles the POST request for uploading a file.
@@ -30,26 +29,48 @@ export async function POST(request: Request) {
   // マルチパートデータを取得
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
+  const uuid = formData.get("uuid") as string | null;
 
   if (!file) {
     return NextResponse.json({ error: "ファイルが見つかりません。" }, { status: 400 });
   }
 
-  // ファイル名を生成（UUIDを使用）
   const fileName = `${uuidv4()}-${file.name}`;
-  const uploadsDir = path.join(process.cwd(),"public", "images", "uploads");
 
-  // アップロードディレクトリが存在しない場合は作成
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+
+  const supabase = await createClient()
+
+  // storageに画像ファイルをアップロード
+  const {data, error: uploadError } = await supabase.storage
+    .from("md-blog")
+    .upload(`captures/${fileName}`, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error("Error uploading file to Supabase Storage:", uploadError);
+    return NextResponse.json({ error: "データのストレージアップロードに失敗しました。" }, { status: 500 });
   }
 
-  // ファイルを保存
-  const filePath = path.join(uploadsDir, fileName);
-  const buffer = Buffer.from(await file.arrayBuffer());
-  fs.writeFileSync(filePath, buffer);
+  // DBにデータを挿入
+  const { error } = await supabase
+    .from("m_images")
+    .insert([
+      {
+        image_id: uuid,
+        file_url: data.fullPath
+      },
+    ]);
 
-  // 保存したファイルのURLを返す
-  const fileUrl = `/images/uploads/${fileName}`;
-  return NextResponse.json({ url: fileUrl });
+  if (error) {
+    console.error("Error inserting data into Supabase:", error.message);
+    return NextResponse.json({ error: "データの挿入に失敗しました。" }, { status: 500 });
+  }
+
+  const publicUrl = supabase.storage
+  .from("md-blog")
+  .getPublicUrl(data.path).data.publicUrl;
+  
+  return NextResponse.json({ url: publicUrl });
 }
