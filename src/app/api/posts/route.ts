@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
+import { createClient } from "@/utils/supabase/server";
 
 export async function POST(request: Request) {
   
   const formData = await request.formData();
+  const uuid = formData.get("uuid") as string;
   const title = formData.get("title") as string;
   const content = formData.get("content") as string;
   const thumbnail = formData.get("thumbnail") as File | null;
@@ -17,61 +16,97 @@ export async function POST(request: Request) {
     );
   }
 
-  // src/postsフォルダのパス
-  const postsDir = path.join(process.cwd(), "src", "posts");
+  // supabaseのストレージに記事ファイルを保存する
 
+  const supabase = await createClient()
+  
   // タイムスタンプを生成
   const timestamp = new Date()
   .toISOString()
-  .replace(/[-:.TZ]/g, "")
+  .replace(/[TZ]/g, "")
   .slice(0, 12); // yyyymmddhhmm形式
 
-  // 既存のファイル数を取得して連番を生成
-  const files = fs.readdirSync(postsDir);
-  const postNumber = files.length + 1;
-
-  let thumbnailUrl = "";
+  let publicUrl = "";
   if (thumbnail) {
-    // サムネイル画像を保存
-    const uploadsDir = path.join(process.cwd(), "public", "images", "thumbnails");
 
-    // アップロードディレクトリが存在しない場合は作成
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    // supabaseに画像ファイルをアップロード
+    const {data, error: uploadError } = await supabase.storage
+      .from("md-blog")
+      .upload(`thumbnails/${uuid}.png`, thumbnail, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("Error uploading file to Supabase Storage:", uploadError.message);
+      return NextResponse.json({ error: "データのストレージアップロードに失敗しました。" }, { status: 500 });
     }
 
-    const fileName = `post${postNumber}-${timestamp}.png`;
-    const filePath = path.join(uploadsDir, fileName);
+    publicUrl = supabase.storage
+    .from("md-blog")
+    .getPublicUrl(data.path).data.publicUrl;
 
-    // ファイルを保存
-    const buffer = Buffer.from(await thumbnail.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
+    // DBにファイルデータを保存する
+    const { error: insertError } = await supabase
+    .from("m_images")
+    .insert([
+      {
+        image_id: uuid,
+        // author_id: "DEV",
+        file_url: `thumbnails/${uuid}.png`
+      },
+    ]);
 
-    // サムネイル画像のURLを生成
-    thumbnailUrl = `/images/thumbnails/${fileName}`;
+    if (insertError) {
+      console.error("Error inserting data into Supabase:", insertError.message);
+      return NextResponse.json({ error: "データの保存に失敗しました。" }, { status: 500 });
+    }
+      
   }
-
-  // フォルダが存在しない場合は作成
-  if (!fs.existsSync(postsDir)) {
-    fs.mkdirSync(postsDir, { recursive: true });
-  }
-
-  // ファイル名を生成
-  const fileName = `post${postNumber}-${timestamp}.md`;
 
   // Markdown形式の内容を作成
   const markdownContent = 
 `---
 title: ${title}
 date: "${timestamp}"
-image: ${thumbnailUrl || ""}
+image: ${publicUrl}
 ---
 
 ${content}
 `;
 
   // ファイルを保存
-  fs.writeFileSync(path.join(postsDir, fileName), markdownContent);
+  const {error} = await supabase.storage
+  .from("md-blog")
+  .upload(`articles/${uuid}.md`, new Blob([content]), {
+    cacheControl: "3600",
+    upsert: true,
+  });
+
+  if (error) {
+    console.error("Error uploading file to Supabase Storage:", error.message);
+    return NextResponse.json({ error: "データのストレージアップロードに失敗しました。" }, { status: 500 });
+  }
+
+
+  // DBにファイルデータを保存する
+  const { error: insertError } = await supabase
+    .from("m_articles")
+    .insert([
+      {
+        article_id: uuid,
+        // author_id: "DEV",
+        file_url: `articles/${uuid}.md`,
+        thumbnail_url: publicUrl,
+        status: "published",
+        title: title,
+      },
+    ]);
+
+  if (insertError) {
+    console.error("Error inserting data into Supabase:", insertError.message);
+    return NextResponse.json({ error: "データの保存に失敗しました。" }, { status: 500 });
+  }
 
   return NextResponse.json({ message: "記事が保存されました！" });
 }

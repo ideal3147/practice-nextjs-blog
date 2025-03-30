@@ -106,6 +106,7 @@ export default function NewPostPage() {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("content", content);
+    formData.append("uuid", uuid || "");
     if (thumbnail) {
       formData.append("thumbnail", thumbnail);
     }
