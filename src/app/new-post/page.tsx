@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * A React component for creating and submitting a new blog post.
@@ -50,6 +50,17 @@ export default function NewPostPage() {
   const [content, setContent] = useState("");
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [uuid, setUuid] = useState<string | null>("");
+
+  useEffect(() => {
+    const generatedUuid = uuidv4();
+    setUuid(generatedUuid);
+
+    return () => {
+      setUuid("");
+    };
+  }, []);
+
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -67,6 +78,7 @@ export default function NewPostPage() {
           // 画像をアップロードする処理
           const formData = new FormData();
           formData.append("file", file);
+          formData.append("uuid", uuid || "");
 
           // 画像をアップロードするAPIエンドポイントを指定
           const response = await fetch("/api/upload", {
