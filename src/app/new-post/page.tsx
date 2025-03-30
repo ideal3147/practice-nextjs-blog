@@ -122,6 +122,7 @@ export default function NewPostPage() {
       setContent("");
       setThumbnail(null);
       alert("記事が保存されました！");
+      window.location.href = "/";
     } else {
       alert("記事の保存に失敗しました。");
     }
