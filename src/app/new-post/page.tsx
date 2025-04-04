@@ -75,26 +75,16 @@ export default function NewPostPage() {
       if (item.type.startsWith("image/")) {
         const file = item.getAsFile();
         if (file) {
-          // 画像をアップロードする処理
-          const formData = new FormData();
-          formData.append("file", file);
-          formData.append("uuid", uuid || "");
 
-          // 画像をアップロードするAPIエンドポイントを指定
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-          });
+          // オブジェクトURLを生成
+          const blobObjectUrl = URL.createObjectURL(file);
+          // blobObjectUrlの文字列から、blob:を取り除く
+          const objectUrl = blobObjectUrl.replace("blob:", ""); 
 
-          if (response.ok) {
-            const { url } = await response.json(); // アップロードされた画像のURLを取得
-            const markdownImage = `![画像の説明](${url})\n`;
+          const markdownImage = `![画像の説明](${objectUrl})\n`;
 
-            // 現在のコンテンツに画像のMarkdownを追加
-            setContent((prevContent) => prevContent + markdownImage);
-          } else {
-            alert("画像のアップロードに失敗しました。");
-          }
+          // 現在のコンテンツに画像のMarkdownを追加
+          setContent((prevContent) => prevContent + markdownImage);
         }
       }
     }
@@ -226,10 +216,18 @@ export default function NewPostPage() {
         {/* プレビューモード */}
         {mode === "preview" && (
           <div className="mb-4">
-            <div className="prose !max-w-none border !min-h-[200px] border-gray-300 rounded px-4 py-2">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-            </div>
+          <div className="prose !max-w-none border !min-h-[200px] border-gray-300 rounded px-4 py-2">
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                img: ({ node, ...props }) => {
+                  return <img src={'blob:' + props.src} style={{ maxWidth: "50%" }} />;
+                },
+              }}>
+              {content}
+            </ReactMarkdown>
           </div>
+        </div>
         )}
 
         {/* 登録ボタン */}
