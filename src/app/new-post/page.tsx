@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { v4 as uuidv4 } from "uuid";
 
 /**
  * A React component for creating and submitting a new blog post.
@@ -50,17 +49,7 @@ export default function NewPostPage() {
   const [content, setContent] = useState("");
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [thumbnail, setThumbnail] = useState<File | null>(null);
-  const [uuid, setUuid] = useState<string | null>("");
-
-  useEffect(() => {
-    const generatedUuid = uuidv4();
-    setUuid(generatedUuid);
-
-    return () => {
-      setUuid("");
-    };
-  }, []);
-
+  const [imageMap, setImageMap] = useState<Record<string, File>>({});
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -85,6 +74,7 @@ export default function NewPostPage() {
 
           // 現在のコンテンツに画像のMarkdownを追加
           setContent((prevContent) => prevContent + markdownImage);
+          setImageMap((prev) => ({ ...prev, [blobObjectUrl]: file }));
         }
       }
     }
@@ -96,10 +86,12 @@ export default function NewPostPage() {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("content", content);
-    formData.append("uuid", uuid || "");
     if (thumbnail) {
       formData.append("thumbnail", thumbnail);
     }
+    Object.entries(imageMap).forEach(([blobUrl, file], index) => {
+      formData.append(`image-${index}`, file);
+    });
 
     // APIルートにデータを送信
     const response = await fetch("/api/posts", {
