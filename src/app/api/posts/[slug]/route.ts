@@ -161,117 +161,101 @@ ${content}`;
   }
 }
 
+
+
+/**
+ * Handles the deletion of an article and its associated resources.
+ *
+ * This function performs the following steps:
+ * 1. Retrieves the article UUID from the request parameters.
+ * 2. Fetches associated image UUIDs from the database.
+ * 3. Deletes associated images from storage.
+ * 4. Deletes the article file from storage.
+ * 5. Fetches and deletes the thumbnail image and its metadata, if present.
+ * 6. Deletes image metadata from the `m_images` table.
+ * 7. Deletes article metadata from the `m_articles` table.
+ *
+ * @param request - The HTTP request object.
+ * @param context - An object containing route parameters, including:
+ *   - `params`: A promise resolving to an object with the `slug` property (article UUID).
+ * @returns A JSON response indicating success or failure.
+ *
+ * @throws Will return a JSON response with a 500 status code if any operation fails.
+ */
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const articleUuid = (await params).slug;
-
-    // 記事に含まれる画像を全検索
-    // c_article_imagesテーブルから、article_idがarticleUuidのimage_idを取得
     const supabase = await createClient();
+
+    // Helper function to handle errors
+    const handleError = (message: string, error: any) => {
+      console.error(message, error.message);
+      return NextResponse.json({ error: message }, { status: 500 });
+    };
+
+    // Fetch associated image UUIDs
     const { data: imageUuids, error: imagesError } = await supabase
       .from("c_article_images")
       .select("image_id")
       .eq("article_id", articleUuid);
 
-    if (imagesError) {
-      console.error("Error fetching images from Supabase:", imagesError.message);
-      return NextResponse.json(
-        { error: "記事の画像を取得中にエラーが発生しました。" },
-        { status: 500 }
-      );
-    }
+    if (imagesError) return handleError("記事の画像を取得中にエラーが発生しました。", imagesError);
 
-    // 取得した画像のUUIDでそれぞれ、storageの該当の画像を削除する。
+    // Delete associated images from storage
     for (const imageUuid of imageUuids) {
       const { error: deleteImageError } = await supabase.storage
         .from("md-blog")
         .remove([`captures/${imageUuid.image_id}.png`]);
-      if (deleteImageError) {
-        console.error("Error deleting image from Supabase:", deleteImageError.message);
-        return NextResponse.json(
-          { error: "画像の削除中にエラーが発生しました。" },
-          { status: 500 }
-        );
-      }
+      if (deleteImageError) return handleError("画像の削除中にエラーが発生しました。", deleteImageError);
     }
 
-    // storageから、記事ファイルを削除する
+    // Delete article file from storage
     const { error: deleteFileError } = await supabase.storage
       .from("md-blog")
       .remove([`articles/${articleUuid}.md`]);
-    if (deleteFileError) {
-      console.error("Error deleting file from Supabase:", deleteFileError.message);
-      return NextResponse.json(
-        { error: "記事ファイルの削除中にエラーが発生しました。" },
-        { status: 500 }
-      );
-    }
+    if (deleteFileError) return handleError("記事ファイルの削除中にエラーが発生しました。", deleteFileError);
 
-    // m_articlesテーブルから、thumbnail_urlを取得する
+    // Fetch thumbnail URL
     const { data: thumbnailUrl, error: thumbnailError } = await supabase
       .from("m_articles")
       .select("thumbnail_url")
       .eq("article_id", articleUuid)
       .single();
 
-    if (thumbnailError) {
-      console.error("Error fetching thumbnail from Supabase:", thumbnailError.message);
-      return NextResponse.json(
-        { error: "サムネイルの取得中にエラーが発生しました。" },
-        { status: 500 }
-      );
-    }
+    if (thumbnailError) return handleError("サムネイルの取得中にエラーが発生しました。", thumbnailError);
 
+    // Delete thumbnail image and its metadata
     if (thumbnailUrl) {
-      // サムネイル画像をstorageから削除
       const { error: deleteThumbnailError } = await supabase.storage
         .from("md-blog")
         .remove([`thumbnails/${articleUuid}.png`]);
-      if (deleteThumbnailError) {
-        console.error("Error deleting thumbnail from Supabase:", deleteThumbnailError.message);
-        return NextResponse.json(
-          { error: "サムネイル画像の削除中にエラーが発生しました。" },
-          { status: 500 }
-        );
-      }
+      if (deleteThumbnailError) return handleError("サムネイル画像の削除中にエラーが発生しました。", deleteThumbnailError);
 
-      // サムネイル画像情報をm_imagesテーブルから削除
       const { error: deleteThumbnailImageError } = await supabase
         .from("m_images")
         .delete()
         .eq("image_id", articleUuid);
-      if (deleteThumbnailImageError) {
-        console.error("Error deleting thumbnail image from Supabase:", deleteThumbnailImageError.message);
-        return NextResponse.json(
-          { error: "サムネイル画像情報の削除中にエラーが発生しました。" },
-          { status: 500 }
-        );
-      }
+      if (deleteThumbnailImageError) return handleError("サムネイル画像情報の削除中にエラーが発生しました。", deleteThumbnailImageError);
     }
 
-    // m_imagesテーブルから、今回削除した画像のレコードを削除する
+    // Delete image metadata from m_images table
     const imageIdsToDelete = imageUuids.map((image) => image.image_id);
-    const { data: data, error: deleteImagesError } = await supabase
+    const { error: deleteImagesError } = await supabase
       .from("m_images")
       .delete()
       .in("image_id", imageIdsToDelete);
+    if (deleteImagesError) return handleError("画像情報の削除中にエラーが発生しました。", deleteImagesError);
 
-    // m_articlesテーブルから、記事のレコードを削除する
+    // Delete article metadata from m_articles table
     const { error: deleteArticleError } = await supabase
       .from("m_articles")
       .delete()
       .eq("article_id", articleUuid);
-    if (deleteArticleError) {
-      console.error("Error deleting article from Supabase:", deleteArticleError.message);
-      return NextResponse.json(
-        { error: "記事の削除中にエラーが発生しました。" },
-        { status: 500 }
-      );
-    }
-    
+    if (deleteArticleError) return handleError("記事の削除中にエラーが発生しました。", deleteArticleError);
+
     return NextResponse.json({ message: "記事が削除されました。" });
   } catch (error) {
     console.error("削除中にエラーが発生しました:", error);
