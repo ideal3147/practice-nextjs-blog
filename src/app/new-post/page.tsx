@@ -74,7 +74,7 @@ export default function NewPostPage() {
 
           // 現在のコンテンツに画像のMarkdownを追加
           setContent((prevContent) => prevContent + markdownImage);
-          setImageMap((prev) => ({ ...prev, [blobObjectUrl]: file }));
+          setImageMap((prev) => ({ ...prev, [objectUrl]: file }));
         }
       }
     }
@@ -89,8 +89,8 @@ export default function NewPostPage() {
     if (thumbnail) {
       formData.append("thumbnail", thumbnail);
     }
-    Object.entries(imageMap).forEach(([blobUrl, file], index) => {
-      formData.append(`image-${index}`, file);
+    Object.entries(imageMap).forEach(([blobUrl, file]) => {
+      formData.append(`image-${blobUrl}`, file);
     });
 
     // APIルートにデータを送信

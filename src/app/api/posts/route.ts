@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const timestamp = generateTimestamp();
   const articleUuid = uuidv4();
-  let imageMap = new Map<string, string>();
+  let imageInfoMap = new Map<string, string>();
   try {
     // サムネイルのアップロード
     const thumbnailPublicUrl = thumbnail
@@ -26,20 +26,24 @@ export async function POST(request: Request) {
       : "";
 
     // 画像のアップロード
-    const images: File[] = [];
+    const imageMap: Map<string, File> = new Map<string, File>();
 
     for (const [key, value] of formData.entries()) {
       if (key.startsWith("image-") && value instanceof File) {
-        images.push(value);
+        // keyの"image-"を取り除く
+        const imageKey = key.replace("image-", "");
+        imageMap.set(imageKey, value as File);
       }
     }
-    imageMap = await uploadImages(supabase, images);
+    const uploadResult = await uploadImages(supabase, imageMap, content);
+    imageInfoMap = uploadResult.imageURLInfo;
+    const articleContent = uploadResult.articleContent;
 
     // Markdownファイルのアップロード
-    await uploadMarkdownFile(supabase, articleUuid, title, timestamp, content, thumbnailPublicUrl);
+    await uploadMarkdownFile(supabase, articleUuid, title, timestamp, articleContent, thumbnailPublicUrl);
 
     // データベースへの挿入
-    await insertToDatabase(supabase, articleUuid, title, thumbnailPublicUrl, imageMap);
+    await insertToDatabase(supabase, articleUuid, title, thumbnailPublicUrl, imageInfoMap);
 
     return NextResponse.json({ message: "記事が保存されました！" });
   } catch (error) {
@@ -50,7 +54,7 @@ export async function POST(request: Request) {
       .remove([`articles/${articleUuid}.md`, `thumbnails/${articleUuid}.png`]);
 
     // supabase databaseに保存した画像の削除処理を追加する
-    for (const [uuid] of imageMap.entries()) {
+    for (const [uuid] of imageInfoMap.entries()) {
       const { error: deleteImageError } = await supabase.storage
         .from("md-blog")
         .remove([`captures/${uuid}.png`]);
@@ -194,17 +198,18 @@ async function insertToDatabase(
  */
 async function uploadImages(
   supabase: any,
-  images: File[]
-): Promise<Map<string, string>> {
-  if (!(images instanceof Array)) {
+  images: Map<string, File>,
+  content: string,
+): Promise<{ imageURLInfo: Map<string, string>, articleContent: string; }>  {
+  if (!(images instanceof Map)) {
     console.warn("画像ファイルがありません。");
-    return new Map<string, string>(); 
+    return { imageURLInfo: new Map<string, string>(), articleContent: content }; 
   }
 
   const result = new Map<string, string>();
 
-  for (const image of images) {
-    if (!(image instanceof File)) {
+  for (const [key, value] of images.entries()) {
+    if (!(value instanceof File)) {
       console.warn("画像ファイルがありません。スキップします。");
       continue;
     }
@@ -212,7 +217,7 @@ async function uploadImages(
     const uuid = uuidv4();
     const { data, error: uploadError } = await supabase.storage
       .from("md-blog")
-      .upload(`captures/${uuid}.png`, image, {
+      .upload(`captures/${uuid}.png`, value, {
         cacheControl: "3600",
         upsert: true,
       });
@@ -226,7 +231,14 @@ async function uploadImages(
       .from("md-blog")
       .getPublicUrl(data.path).data.publicUrl;
 
+    // 記事の中のObjectURLをPublicURLに置き換える
+    content = content.replace(key, publicUrl);
     result.set(uuid, publicUrl);
+
   }
-  return result;
+  return {imageURLInfo: result, articleContent: content};
+}
+
+function useState(arg0: string): [any, any] {
+  throw new Error("Function not implemented.");
 }
