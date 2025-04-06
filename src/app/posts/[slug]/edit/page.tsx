@@ -73,7 +73,8 @@ export default function EditPost({ params }: Props) {
 
 
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     const formData = new FormData();
     formData.append("title", title);

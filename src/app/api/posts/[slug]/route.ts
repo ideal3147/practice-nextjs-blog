@@ -132,7 +132,10 @@ export async function PUT(
     // Update database
     await insertToDatabase(supabase, articleUuid, title, thumbnailUrl, imageInfoMap, date);
 
-    return NextResponse.json({ message: "記事が保存されました。" });
+    return NextResponse.json(
+      {message: "記事が保存されました。" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("エラーが発生しました:", error);
     return respondWithError("記事の保存中にエラーが発生しました。", 500);
