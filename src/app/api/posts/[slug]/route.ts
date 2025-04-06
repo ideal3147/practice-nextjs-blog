@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 import matter from "gray-matter";
 import { remark } from "remark";
 import html from "remark-html";
@@ -87,182 +85,288 @@ export async function GET(
 }
 
 
+/**
+ * Handles the PUT request to update a blog post.
+ *
+ * This function processes the incoming request to update an article identified by its slug.
+ * It extracts form data, validates required fields, handles image and thumbnail uploads,
+ * updates the Markdown file, and updates the database with the new article information.
+ *
+ * @param request - The incoming HTTP request object.
+ * @param params - An object containing route parameters, including the `slug` of the article.
+ * 
+ * @returns A JSON response indicating success or failure of the operation.
+ *
+ * @throws Will return a 400 error if required fields (title or content) are missing.
+ * @throws Will return a 500 error if an unexpected error occurs during processing.
+ */
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-
     const formData = await request.formData();
-    const title = formData.get("title") as string;
-    const date = formData.get("date") as string;
-    const content = formData.get("content") as string;
-    const isThumbnailChange = formData.get("isThumbnailChange") as string;
-    const thumbnail = formData.get("thumbnail") as File | null;
-    let articleContent = content;
-
-    const timestamp = generateTimestamp();
+    const { title, date, content, isThumbnailChange, thumbnail } = extractFormData(formData);
+    const articleUuid = (await params).slug;
 
     if (!title || !content) {
-      return NextResponse.json(
-        { error: "タイトルと本文は必須です。" },
-        { status: 400 }
-      );
+      return respondWithError("タイトルと本文は必須です。", 400);
     }
 
     const supabase = await createClient();
-    const articleUuid = (await params).slug;
-    
-    let imageInfoMap = new Map<string, string>();
-    
-    try {
-      
-      // 既存の画像が削除されていないかを確認する
-      const { data: existingImages, error: fetchError } = await supabase
-        .from("c_article_images")
-        .select("image_id")
-        .eq("article_id", articleUuid);
-      if (fetchError) {
-        console.error("Error fetching existing images:", fetchError.message);
-        return NextResponse.json(
-          { error: "既存の画像を取得できませんでした。" },
-          { status: 500 }
-        );
-      }
 
-      // m_imagesから既存画像urlの一覧を取得する
-      const { data: imageUrls, error: imageError } = await supabase
-        .from("m_images")
-        .select("image_id, file_url")
-        .in("image_id", existingImages.map((image) => image.image_id));
-      if (imageError) {
-        console.error("Error fetching image URLs:", imageError.message);
-        return NextResponse.json(
-          { error: "画像URLを取得できませんでした。" },
-          { status: 500 }
-        );
-      }
+    // Handle images
+    const { imageURLInfo: imageInfoMap, articleContent: updatedContent } = await handleImages(
+      supabase,
+      formData,
+      content,
+      articleUuid
+    );
 
-      // imageUrlsの中で、記事の本文に記載されていないものを削除する
-      const deleteImageUrls = imageUrls.filter((image) => !content.includes(image.file_url));
-      if (deleteImageUrls.length > 0) {
+    // Handle thumbnail
+    const thumbnailUrl = await handleThumbnail(supabase, isThumbnailChange, thumbnail, articleUuid);
 
-        // storageから削除する
-        for (const image of deleteImageUrls) {
-          const { error: storageError } = await supabase.storage
-            .from("md-blog")
-            .remove([`captures/${image.image_id}.png`]);
-          if (storageError) {
-            console.error("Error deleting image from storage:", storageError.message);
-            return NextResponse.json(
-              { error: "画像をストレージから削除できませんでした。" },
-              { status: 500 }
-            );
-          }
-        }
-        // m_imagesから削除する
-        const imageIdsToDelete = deleteImageUrls.map((image) => image.image_id);
-        const { error: deleteError } = await supabase
-          .from("m_images")
-          .delete()
-          .in("image_id", imageIdsToDelete);
-        if (deleteError) {
-          console.error("Error deleting images:", deleteError.message);
-          return NextResponse.json(
-            { error: "画像を削除できませんでした。" },
-            { status: 500 }
-          );
-        }
-      }
+    // Upload Markdown file
+    await uploadMarkdownFile(supabase, articleUuid, title, date, updatedContent, thumbnailUrl);
 
-      // 新規画像のアップロード
-      const imageMap: Map<string, File> = new Map<string, File>();
-
-      for (const [key, value] of formData.entries()) {
-        if (key.startsWith("image-") && value instanceof File) {
-          // keyの"image-"を取り除く
-          const imageKey = key.replace("image-", "");
-          imageMap.set(imageKey, value as File);
-        }
-      }
-      const uploadResult = await uploadImages(supabase, imageMap, content);
-      imageInfoMap = uploadResult.imageURLInfo;
-      articleContent = uploadResult.articleContent;
-    } catch (error : any) {
-      console.error("画像のアップロードに失敗:", error.message);
-      return NextResponse.json(
-        { error: "画像をストレージにアップロードできませんでした。" },
-        { status: 500 }
-      );
-    }
-
-
-    let thumbnailUrl = "";
-    if (isThumbnailChange === 'true') {
-      // storageから、既存のサムネイルの削除
-      const { error: deleteThumbnailError } = await supabase.storage
-        .from("md-blog")
-        .remove([`thumbnails/${articleUuid}.png`]);
-      if (deleteThumbnailError) {
-        console.error("Error deleting thumbnail from storage:", deleteThumbnailError.message);
-        return NextResponse.json(
-          { error: "サムネイルをストレージから削除できませんでした。" },
-          { status: 500 }
-        );
-      }
-
-      // 新しいサムネイルURLが存在する場合、アップロード
-      if (thumbnail && thumbnail instanceof File) {
-        const { data, error: uploadError } = await supabase.storage
-          .from("md-blog")
-          .upload(`thumbnails/${articleUuid}.png`, thumbnail, {
-            cacheControl: "3600",
-            upsert: true,
-          });
-
-        if (uploadError) {
-          console.error("サムネイルのアップロードに失敗:", uploadError.message);
-          return NextResponse.json(
-            { error: "サムネイルをストレージにアップロードできませんでした。" },
-            { status: 500 }
-          );
-        }
-
-        thumbnailUrl = supabase.storage
-          .from("md-blog")
-          .getPublicUrl(data.path).data.publicUrl;
-      } 
-    } else {
-      // m_articlesからサムネイルURLを取得
-      const { data: thumbnailData, error: thumbnailError } = await supabase
-        .from("m_articles")
-        .select("thumbnail_url")
-        .eq("article_id", articleUuid)
-        .single();
-      if (thumbnailError) {
-        console.error("Error fetching thumbnail URL:", thumbnailError.message);
-        return NextResponse.json(
-          { error: "サムネイルURLを取得できませんでした。" },
-          { status: 500 }
-        );
-      }
-      thumbnailUrl = thumbnailData.thumbnail_url;
-    }
-
-    // Markdownファイルのアップロード
-    await uploadMarkdownFile(supabase, articleUuid, title, date, articleContent, thumbnailUrl);
-
-    // データベースへの挿入
+    // Update database
     await insertToDatabase(supabase, articleUuid, title, thumbnailUrl, imageInfoMap, date);
 
     return NextResponse.json({ message: "記事が保存されました。" });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { error: "記事の保存中にエラーが発生しました。" },
-      { status: 500 }
-    );
+    console.error("エラーが発生しました:", error);
+    return respondWithError("記事の保存中にエラーが発生しました。", 500);
   }
+}
+
+/**
+ * Extracts and returns form data from a `FormData` object.
+ *
+ * @param formData - The `FormData` object containing the form fields and values.
+ * @returns An object containing the extracted form data:
+ * - `title`: The title of the post as a string.
+ * - `date`: The date of the post as a string.
+ * - `content`: The content of the post as a string.
+ * - `isThumbnailChange`: A string indicating whether the thumbnail has changed.
+ * - `thumbnail`: The thumbnail file as a `File` object or `null` if not provided.
+ */
+function extractFormData(formData: FormData) {
+  return {
+    title: formData.get("title") as string,
+    date: formData.get("date") as string,
+    content: formData.get("content") as string,
+    isThumbnailChange: formData.get("isThumbnailChange") as string,
+    thumbnail: formData.get("thumbnail") as File | null,
+  };
+}
+
+/**
+ * Handles image processing for a given article by performing the following steps:
+ * 1. Deletes unused images associated with the article.
+ * 2. Extracts images from the provided form data.
+ * 3. Uploads the extracted images and updates the content accordingly.
+ *
+ * @param supabase - The Supabase client instance used for database operations.
+ * @param formData - The form data containing the images to be processed.
+ * @param content - The content of the article, used to determine which images are in use.
+ * @param articleUuid - The unique identifier of the article for which images are being processed.
+ * @returns A promise that resolves to the updated content with uploaded image references.
+ */
+async function handleImages(
+  supabase: any,
+  formData: FormData,
+  content: string,
+  articleUuid: string
+) {
+  await deleteUnusedImages(supabase, content, articleUuid);
+  const imageMap = extractImagesFromFormData(formData);
+  return await uploadImages(supabase, imageMap, content);
+}
+
+/**
+ * Deletes unused images from storage and the database for a given article.
+ *
+ * This function retrieves the existing images associated with an article from the database,
+ * compares them with the content of the article, and deletes any images that are no longer
+ * referenced in the content. It ensures that only the images still in use remain stored.
+ *
+ * @param supabase - The Supabase client instance used for database and storage operations.
+ * @param content - The content of the article as a string, used to determine which images are still in use.
+ * @param articleUuid - The unique identifier of the article whose images are being managed.
+ * @throws {Error} If there is an issue fetching existing images or their URLs from the database.
+ */
+async function deleteUnusedImages(supabase: any, content: string, articleUuid: string) {
+  const { data: existingImages, error: fetchError } = await supabase
+    .from("c_article_images")
+    .select("image_id")
+    .eq("article_id", articleUuid);
+
+  if (fetchError) throw new Error("既存の画像を取得できませんでした。");
+
+  const { data: imageUrls, error: imageError } = await supabase
+    .from("m_images")
+    .select("image_id, file_url")
+    .in("image_id", existingImages.map((image: { image_id: any; }) => image.image_id));
+
+  if (imageError) throw new Error("画像URLを取得できませんでした。");
+
+  const deleteImageUrls = imageUrls.filter((image: { file_url: string; }) => !content.includes(image.file_url));
+  await deleteImagesFromStorageAndDatabase(supabase, deleteImageUrls);
+}
+
+/**
+ * Deletes images from both Supabase storage and the database.
+ *
+ * @param supabase - The Supabase client instance used for interacting with storage and database.
+ * @param deleteImageUrls - An array of objects containing image information, where each object includes an `image_id` property.
+ * 
+ * @throws {Error} If an error occurs while deleting images from storage or the database.
+ *
+ * @example
+ * const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+ * const deleteImageUrls = [{ image_id: "123" }, { image_id: "456" }];
+ * 
+ * await deleteImagesFromStorageAndDatabase(supabase, deleteImageUrls);
+ */
+async function deleteImagesFromStorageAndDatabase(supabase: any, deleteImageUrls: any[]) {
+  for (const image of deleteImageUrls) {
+    const { error: storageError } = await supabase.storage
+      .from("md-blog")
+      .remove([`captures/${image.image_id}.png`]);
+    if (storageError) throw new Error("画像をストレージから削除できませんでした。");
+  }
+
+  const imageIdsToDelete = deleteImageUrls.map((image) => image.image_id);
+  const { error: deleteError } = await supabase
+    .from("m_images")
+    .delete()
+    .in("image_id", imageIdsToDelete);
+
+  if (deleteError) throw new Error("画像を削除できませんでした。");
+}
+
+/**
+ * Extracts image files from a FormData object and maps them to their corresponding keys.
+ * 
+ * This function iterates through all entries in the provided FormData object, identifying
+ * entries where the key starts with "image-" and the value is a `File` object. It then
+ * removes the "image-" prefix from the key and stores the resulting key-value pair in a
+ * `Map`, where the key is the modified string and the value is the `File` object.
+ * 
+ * @param formData - The FormData object containing the form entries to process.
+ * @returns A `Map` where the keys are the image identifiers (derived from the original
+ *          keys by removing the "image-" prefix) and the values are the corresponding
+ *          `File` objects.
+ */
+function extractImagesFromFormData(formData: FormData): Map<string, File> {
+  const imageMap = new Map<string, File>();
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith("image-") && value instanceof File) {
+      const imageKey = key.replace("image-", "");
+      imageMap.set(imageKey, value);
+    }
+  }
+  return imageMap;
+}
+
+/**
+ * Handles the thumbnail for an article by either deleting the existing thumbnail
+ * and uploading a new one, or fetching the URL of the existing thumbnail.
+ *
+ * @param supabase - The Supabase client instance used for storage operations.
+ * @param isThumbnailChange - A string indicating whether the thumbnail has changed ("true" or "false").
+ * @param thumbnail - The new thumbnail file to upload, or `null` if no new thumbnail is provided.
+ * @param articleUuid - The unique identifier of the article associated with the thumbnail.
+ * @returns A promise that resolves to the URL of the updated or existing thumbnail.
+ */
+async function handleThumbnail(
+  supabase: any,
+  isThumbnailChange: string,
+  thumbnail: File | null,
+  articleUuid: string
+): Promise<string> {
+  if (isThumbnailChange === "true") {
+    await deleteExistingThumbnail(supabase, articleUuid);
+    return await uploadNewThumbnail(supabase, thumbnail, articleUuid);
+  } else {
+    return await fetchExistingThumbnailUrl(supabase, articleUuid);
+  }
+}
+
+/**
+ * Deletes an existing thumbnail image from the Supabase storage.
+ *
+ * @param supabase - The Supabase client instance used to interact with the storage.
+ * @param articleUuid - The unique identifier of the article whose thumbnail is to be deleted.
+ * @throws {Error} Throws an error if the thumbnail could not be removed from storage.
+ */
+async function deleteExistingThumbnail(supabase: any, articleUuid: string) {
+  const { error } = await supabase.storage
+    .from("md-blog")
+    .remove([`thumbnails/${articleUuid}.png`]);
+  if (error) throw new Error("サムネイルをストレージから削除できませんでした。");
+}
+
+/**
+ * Uploads a new thumbnail image to the Supabase storage and returns its public URL.
+ *
+ * @param supabase - The Supabase client instance used for interacting with the storage.
+ * @param thumbnail - The new thumbnail file to be uploaded. If null, an error will be thrown.
+ * @param articleUuid - The unique identifier of the article, used to name the thumbnail file.
+ * @returns A promise that resolves to the public URL of the uploaded thumbnail.
+ * @throws Will throw an error if the thumbnail is not provided or if the upload fails.
+ */
+async function uploadNewThumbnail(
+  supabase: any,
+  thumbnail: File | null,
+  articleUuid: string
+): Promise<string> {
+  if (!(thumbnail instanceof(File))) {
+    console.log("新しいサムネイルが提供されていません。");
+    return "";
+  }
+
+  const { data, error } = await supabase.storage
+    .from("md-blog")
+    .upload(`thumbnails/${articleUuid}.png`, thumbnail, {
+      cacheControl: "3600",
+      upsert: true,
+    });
+
+  if (error) throw new Error("サムネイルをストレージにアップロードできませんでした。");
+
+  return supabase.storage.from("md-blog").getPublicUrl(data.path).data.publicUrl;
+}
+
+/**
+ * Fetches the existing thumbnail URL for a given article from the "m_articles" table.
+ *
+ * @param supabase - The Supabase client instance used to interact with the database.
+ * @param articleUuid - The unique identifier of the article whose thumbnail URL is to be fetched.
+ * @returns A promise that resolves to the thumbnail URL as a string.
+ * @throws An error if the thumbnail URL cannot be retrieved.
+ */
+async function fetchExistingThumbnailUrl(supabase: any, articleUuid: string): Promise<string> {
+  const { data, error } = await supabase
+    .from("m_articles")
+    .select("thumbnail_url")
+    .eq("article_id", articleUuid)
+    .single();
+
+  if (error) throw new Error("サムネイルURLを取得できませんでした。");
+
+  return data.thumbnail_url;
+}
+
+/**
+ * Generates a JSON response with an error message and HTTP status code.
+ *
+ * @param message - The error message to include in the response.
+ * @param status - The HTTP status code to set for the response.
+ * @returns A `NextResponse` object containing the error message and status code.
+ */
+function respondWithError(message: string, status: number) {
+  return NextResponse.json({ error: message }, { status });
 }
 
 /**
@@ -373,7 +477,7 @@ async function uploadImages(
   images: Map<string, File>,
   content: string,
 ): Promise<{ imageURLInfo: Map<string, string>, articleContent: string; }>  {
-  if (!(images instanceof Map && images.size == 0)) {
+  if (images instanceof Map && images.size == 0) {
     console.warn("画像ファイルがありません。");
     return { imageURLInfo: new Map<string, string>(), articleContent: content }; 
   }

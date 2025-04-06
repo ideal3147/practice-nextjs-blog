@@ -94,7 +94,7 @@ export default function EditPost({ params }: Props) {
 
     if (response.ok) {
       alert("記事が保存されました。");
-      router.push(`/posts/${(await params).slug}`);
+      window.location.href = "/";
     } else {
       alert("記事の保存に失敗しました。");
     }
