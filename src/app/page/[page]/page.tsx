@@ -60,13 +60,21 @@ export default async function Page(props: { params: Promise<{ page: number }> })
   const pageData: PageData = createPageData(params.page, posts.length);
 
   return (
-    <div className="container">
-      <div className="row">
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6 text-center">ようこそ、ブログへ！</h1>
+
+      <div className="grid grid-cols-1 gap-6">
         {posts.slice(pageData.start, pageData.end).map((post) => (
-          <PostCard key={post.slug} post={post} />
+          <div
+            key={post.slug}
+            className="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 transition hover:shadow-lg"
+          >
+            <PostCard post={post} />
+          </div>
         ))}
       </div>
-      <div className="mb-3">
+
+      <div className="mt-8 flex justify-center">
         <Pagination
           type="page"
           pages={pageData.pages}

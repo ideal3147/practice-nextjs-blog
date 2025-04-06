@@ -16,36 +16,67 @@ import { PostItem } from "../app/lib/types/types";
  *
  * @returns {JSX.Element} A clickable card component displaying the post details.
  */
+// const PostCard = ({ post }: { post: PostItem }) => {
+//   return (
+//     <Link
+//       href={`/posts/${post.slug}`}
+//       className="align-self-baseline col-lg-4 d-flex flex-column justify-content-between scale-95 hover:scale-100 ease-in duration-100"
+//     >
+//       {post.image && (
+//         <div className="rounded mx-auto shadow">
+//           <picture>
+//             <img
+//               src={`${post.image}`}
+//               width={600}
+//               height={300}
+//               alt={post.title}
+//               className="object-contain img-fluid img-thumbnail"
+//               style={{ maxWidth: "100%", height: "224px" }}
+//             />
+//           </picture>
+//           <div className="px-2 py-3 mt-auto mx-auto">
+//             <h2 className="font-bold text-lg">{post.title}</h2>
+//             <span className="badge bg-secondary text-white">{post.date}</span>
+//           </div>
+//         </div>
+//       )}
+//       {!post.image && (
+//         <div className="px-2 py-3 mt-auto mx-auto shadow rounded">
+//           <h2 className="font-bold text-lg">{post.title}</h2>
+//           <span className="badge bg-secondary text-white">{post.date}</span>
+//         </div>
+//       )}
+//     </Link>
+//   );
+// };
+
+// export default PostCard;
+
+
 const PostCard = ({ post }: { post: PostItem }) => {
   return (
     <Link
       href={`/posts/${post.slug}`}
-      className="align-self-baseline col-lg-4 d-flex flex-column justify-content-between scale-95 hover:scale-100 ease-in duration-100"
+      className="transition transform hover:scale-[1.02] duration-200"
     >
-      {post.image && (
-        <div className="rounded mx-auto shadow">
-          <picture>
-            <img
-              src={`${post.image}`}
-              width={600}
-              height={300}
-              alt={post.title}
-              className="object-contain img-fluid img-thumbnail"
-              style={{ maxWidth: "100%", height: "224px" }}
-            />
-          </picture>
-          <div className="px-2 py-3 mt-auto mx-auto">
-            <h2 className="font-bold text-lg">{post.title}</h2>
-            <span className="badge bg-secondary text-white">{post.date}</span>
-          </div>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg overflow-hidden flex flex-col h-full">
+        {post.image && (
+          <img
+            src={post.image}
+            alt={post.title}
+            className="w-full h-48 object-cover"
+          />
+        )}
+
+        <div className="p-4 flex flex-col justify-between flex-grow">
+          <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">
+            {post.title}
+          </h2>
+          <span className="inline-block bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium px-3 py-1 rounded-full self-start">
+            {post.date}
+          </span>
         </div>
-      )}
-      {!post.image && (
-        <div className="px-2 py-3 mt-auto mx-auto shadow rounded">
-          <h2 className="font-bold text-lg">{post.title}</h2>
-          <span className="badge bg-secondary text-white">{post.date}</span>
-        </div>
-      )}
+      </div>
     </Link>
   );
 };

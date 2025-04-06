@@ -5,18 +5,24 @@ import Link from "next/link";
 
 export default async function Home() {
   const posts = await getPostData();
-
   const pageData: PageData = createPageData(1, posts.length);
 
   return (
-    <div className="container">
-      <h1 className="text-4xl font-bold text-center my-8">Tatsuya's Blog</h1>
-      <div className="flex flex-col align-top min-h-screen w-1/2 justify-center align-center mx-auto">
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold text-center mb-10">Tatsuya's Blog</h1>
+
+      <div className="flex flex-col gap-6">
         {posts.slice(pageData.start, pageData.end).map((post) => (
-          <PostCard key={post.slug} post={post} />
+          <div
+            key={post.slug}
+            className="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 transition hover:shadow-lg"
+          >
+            <PostCard post={post} />
+          </div>
         ))}
       </div>
-      <div className="mb-3">
+
+      <div className="mt-10 flex justify-center">
         <Pagination
           type="page"
           pages={pageData.pages}
@@ -24,8 +30,12 @@ export default async function Home() {
         />
       </div>
 
-      <Link href="/new-post" className="fixed bottom-15 right-10 bg-blue-500 text-white px-6 py-4 rounded-full shadow-lg hover:bg-blue-600 text-xl">
-          +
+      {/* フローティングボタン */}
+      <Link
+        href="/new-post"
+        className="fixed bottom-6 right-6 bg-blue-600 text-white text-3xl font-bold px-6 py-4 rounded-full shadow-lg hover:bg-blue-700 transition-all"
+      >
+        +
       </Link>
     </div>
   );

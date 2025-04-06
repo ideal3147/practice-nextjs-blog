@@ -27,7 +27,6 @@ type PostData = {
  * @returns {JSX.Element} The component for rendering a blog post page.
  */
 export default function Post({ params }: Props) {
-
   const [postData, setPostData] = useState<PostData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -37,17 +36,11 @@ export default function Post({ params }: Props) {
     const fetchPostData = async () => {
       try {
         const response = await fetch(`/api/posts/${(await params).slug}`);
-        if (!response.ok) {
-          throw new Error("記事データの取得に失敗しました。");
-        }
+        if (!response.ok) throw new Error("記事データの取得に失敗しました。");
         const data = await response.json();
         setPostData(data);
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("予期しないエラーが発生しました。");
-        }
+        setError(err instanceof Error ? err.message : "予期しないエラーが発生しました。");
       }
     };
 
@@ -55,91 +48,73 @@ export default function Post({ params }: Props) {
   }, []);
 
   const handleEdit = async () => {
-    router.push(`/posts/${(await params).slug}/edit`)
-  }
+    router.push(`/posts/${(await params).slug}/edit`);
+  };
 
   const handleDelete = async () => {
-    const confirmed = window.confirm("本当に削除してよろしいですか？");
-    if (!confirmed) return;
-
+    if (!window.confirm("本当に削除してよろしいですか？")) return;
     setIsDeleting(true);
-
-    const response = await fetch(`/api/posts/${(await params).slug}`, {
-      method: "DELETE",
-    });
+    const response = await fetch(`/api/posts/${(await params).slug}`, { method: "DELETE" });
 
     if (response.ok) {
       alert("記事が削除されました。");
-      router.push("/"); // ウェルカムページにリダイレクト
+      router.push("/");
     } else {
       alert("記事の削除に失敗しました。");
     }
-
     setIsDeleting(false);
   };
 
-  if (error) {
-    return <div className="text-red-500">エラー: {error}</div>;
-  }
-
-  if (!postData) {
-    return <div>読み込み中...</div>;
-  }
+  if (error) return <div className="text-red-500 text-center">{error}</div>;
+  if (!postData) return <div className="text-center text-gray-500">読み込み中...</div>;
 
   return (
-    <>
-      <div className="max-w-none">
-
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={handleEdit}
-            className="border border-blue-500 text-blue-500 px-4 py-2 rounded shadow hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            編集する
-          </button>
-        </div>
-
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={handleDelete}
-            className="bg-red-500 text-white px-4 py-2 rounded shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-            disabled={isDeleting}
-          >
-            {isDeleting ? "削除中..." : "削除"}
-          </button>
-        </div>
-        
-        {postData.image && (
-          <div className="flex border justify-center mb-3">
-            <picture>
-              <img
-                src={`${postData.image}`}
-                alt={postData.title}
-                width={600}
-                height={224}
-                className="object-contain max-w-full h-auto"
-                style={{ maxHeight: "224px" }}
-              />
-            </picture>
-          </div>
-        )}
-        <h1 className="h2">{postData?.title}</h1>
-        <time>{postData?.date}</time>
-        <div className="space-x-2">
-          {postData?.tags &&
-            postData.tags?.map((category) => (
-              <span key={category} className="badge bg-secondary">
-                <Link href={`/tags/${category}`}>{category}</Link>
-              </span>
-            ))}
-        </div>
-        <div className="row">
-          <div
-            className={"markdown-content prose col-md-12"}
-            dangerouslySetInnerHTML={{ __html: postData.contentHtml }}
-          ></div>
-        </div>
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="flex justify-end gap-4 mb-6">
+        <button
+          onClick={handleEdit}
+          className="px-4 py-2 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-500 hover:text-white transition"
+        >
+          編集
+        </button>
+        <button
+          onClick={handleDelete}
+          disabled={isDeleting}
+          className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+        >
+          {isDeleting ? "削除中..." : "削除"}
+        </button>
       </div>
-    </>
+
+      {postData.image && (
+        <div className="mb-6 rounded-lg shadow overflow-hidden">
+          <img
+            src={postData.image}
+            alt={postData.title}
+            className="w-full h-64 object-cover"
+          />
+        </div>
+      )}
+
+      <h1 className="text-4xl font-bold mb-2">{postData.title}</h1>
+      <div className="text-gray-500 mb-4">{postData.date}</div>
+
+      <div className="flex flex-wrap gap-2 mb-6">
+        {postData.tags?.map((tag) => (
+          <Link
+            key={tag}
+            href={`/tags/${tag}`}
+            className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300"
+          >
+            #{tag}
+          </Link>
+        ))}
+      </div>
+
+      <div
+        className="prose prose-lg max-w-none"
+        dangerouslySetInnerHTML={{ __html: postData.contentHtml }}
+      ></div>
+    </div>
   );
 }
