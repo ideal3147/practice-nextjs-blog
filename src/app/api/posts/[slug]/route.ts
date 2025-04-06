@@ -212,7 +212,7 @@ export async function PUT(
       }
 
       // 新しいサムネイルURLが存在する場合、アップロード
-      if (thumbnail) {
+      if (thumbnail && thumbnail instanceof File) {
         const { data, error: uploadError } = await supabase.storage
           .from("md-blog")
           .upload(`thumbnails/${articleUuid}.png`, thumbnail, {
