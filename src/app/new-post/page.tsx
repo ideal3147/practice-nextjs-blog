@@ -5,7 +5,6 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-
 /**
  * A React component for creating and submitting a new blog post.
  * 
@@ -50,6 +49,7 @@ export default function NewPostPage() {
   const [content, setContent] = useState("");
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [imageMap, setImageMap] = useState<Record<string, File>>({});
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -64,25 +64,17 @@ export default function NewPostPage() {
       if (item.type.startsWith("image/")) {
         const file = item.getAsFile();
         if (file) {
-          // 画像をアップロードする処理
-          const formData = new FormData();
-          formData.append("file", file);
 
-          // 画像をアップロードするAPIエンドポイントを指定
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-          });
+          // オブジェクトURLを生成
+          const blobObjectUrl = URL.createObjectURL(file);
+          // blobObjectUrlの文字列から、blob:を取り除く
+          const objectUrl = blobObjectUrl.replace("blob:", ""); 
 
-          if (response.ok) {
-            const { url } = await response.json(); // アップロードされた画像のURLを取得
-            const markdownImage = `![画像の説明](${url})\n`;
+          const markdownImage = `![画像の説明](${objectUrl})\n`;
 
-            // 現在のコンテンツに画像のMarkdownを追加
-            setContent((prevContent) => prevContent + markdownImage);
-          } else {
-            alert("画像のアップロードに失敗しました。");
-          }
+          // 現在のコンテンツに画像のMarkdownを追加
+          setContent((prevContent) => prevContent + markdownImage);
+          setImageMap((prev) => ({ ...prev, [objectUrl]: file }));
         }
       }
     }
@@ -97,6 +89,9 @@ export default function NewPostPage() {
     if (thumbnail) {
       formData.append("thumbnail", thumbnail);
     }
+    Object.entries(imageMap).forEach(([blobUrl, file]) => {
+      formData.append(`image-${blobUrl}`, file);
+    });
 
     // APIルートにデータを送信
     const response = await fetch("/api/posts", {
@@ -109,6 +104,7 @@ export default function NewPostPage() {
       setContent("");
       setThumbnail(null);
       alert("記事が保存されました！");
+      window.location.href = "/";
     } else {
       alert("記事の保存に失敗しました。");
     }
@@ -212,10 +208,18 @@ export default function NewPostPage() {
         {/* プレビューモード */}
         {mode === "preview" && (
           <div className="mb-4">
-            <div className="prose !max-w-none border !min-h-[200px] border-gray-300 rounded px-4 py-2">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-            </div>
+          <div className="prose !max-w-none border !min-h-[200px] border-gray-300 rounded px-4 py-2">
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                img: ({ node, ...props }) => {
+                  return <img src={'blob:' + props.src} style={{ maxWidth: "50%" }} />;
+                },
+              }}>
+              {content}
+            </ReactMarkdown>
           </div>
+        </div>
         )}
 
         {/* 登録ボタン */}

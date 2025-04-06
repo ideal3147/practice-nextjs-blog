@@ -1,8 +1,6 @@
-import fs from "fs";
-import path from "path";
 import { POSTS_PER_PAGE } from "./constants";
-import { PageData, PostItem } from "./types";
-import matter from "gray-matter";
+import { PageData, PostItem } from "./types/types";
+import { createClient } from "@/utils/supabase/server";
 
 /**
  * Asynchronously retrieves and processes post data from markdown files located in the "src/posts" directory.
@@ -22,28 +20,33 @@ import matter from "gray-matter";
  * @throws Will throw an error if the "src/posts" directory or any of its files cannot be read.
  */
 const getPostData = async (): Promise<PostItem[]> => {
-  const postsDirectory = path.join(process.cwd(), "src", "posts");
-  const filenames = fs.readdirSync(postsDirectory);
-  const posts = filenames
-    .map((filename) => {
-      const filePath = path.join(postsDirectory, filename);
-      const fileContents = fs.readFileSync(filePath, "utf-8");
-      const { data } = matter(fileContents);
 
-      return {
-        slug: filename.replace(/\.md$/, ""),
-        title: data.title,
-        description: data.description,
-        date: data.date,
-        image: data.image,
-        tags: data.tags || [],
-        contentHtml: "",
-      };
-    })
-    .sort((postA, postB) =>
-      new Date(postA.date) > new Date(postB.date) ? -1 : 1
+  // supabase DBからファイルを取得する
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("m_articles")
+    .select(
+      "article_id, title, thumbnail_url, file_url, created_at"
     );
 
+  if (error) {
+    console.error("Error fetching data from Supabase:", error.message);
+    return [];
+  } 
+    const posts = await Promise.all(
+      data?.map(async (mdFileInfo) => {
+
+        return {
+          slug: mdFileInfo.article_id,
+          title: mdFileInfo.title,
+          description: "",
+          date: mdFileInfo.created_at,
+          image: mdFileInfo.thumbnail_url,
+          tags: [],
+          contentHtml: "",
+        };
+      }) || []
+    );
   return posts;
 };
 
