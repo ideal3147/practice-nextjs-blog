@@ -18,6 +18,8 @@ export default function EditPost({ params }: Props) {
   const router = useRouter();
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [isThumbnailChange, setIsThumbnailChange] = useState(false);
+  const [imageMap, setImageMap] = useState<Record<string, File>>({});
+
 
   useEffect(() => {
     const fetchPostData = async () => {
@@ -53,40 +55,38 @@ export default function EditPost({ params }: Props) {
       if (item.type.startsWith("image/")) {
         const file = item.getAsFile();
         if (file) {
-          // 画像をアップロードする処理
-          const formData = new FormData();
-          formData.append("file", file);
 
-          // 画像をアップロードするAPIエンドポイントを指定
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-          });
+          // オブジェクトURLを生成
+          const blobObjectUrl = URL.createObjectURL(file);
+          // blobObjectUrlの文字列から、blob:を取り除く
+          const objectUrl = blobObjectUrl.replace("blob:", ""); 
 
-          if (response.ok) {
-            const { url } = await response.json(); // アップロードされた画像のURLを取得
-            const markdownImage = `![画像の説明](${url})\n`;
+          const markdownImage = `![画像の説明](${objectUrl})\n`;
 
-            // 現在のコンテンツに画像のMarkdownを追加
-            setContent((prevContent) => prevContent + markdownImage);
-          } else {
-            alert("画像のアップロードに失敗しました。");
-          }
+          // 現在のコンテンツに画像のMarkdownを追加
+          setContent((prevContent) => prevContent + markdownImage);
+          setImageMap((prev) => ({ ...prev, [objectUrl]: file }));
         }
       }
     }
   };
 
-  const formData = new FormData();
-  formData.append("title", title);
-  formData.append("date", date);
-  formData.append("content", content);
-  formData.append("isThumbnailChange", isThumbnailChange.toString());  
-  if (isThumbnailChange) {
-    formData.append("thumbnail", thumbnail as Blob);
-  }
+
 
   const handleSave = async () => {
+
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("date", date);
+    formData.append("content", content);
+    formData.append("isThumbnailChange", isThumbnailChange.toString());  
+    if (isThumbnailChange) {
+      formData.append("thumbnail", thumbnail as Blob);
+    }
+    Object.entries(imageMap).forEach(([blobUrl, file]) => {
+      formData.append(`image-${blobUrl}`, file);
+    });
+
     const response = await fetch(`/api/posts/${(await params).slug}`, {
       method: "PUT",
       body: formData,
@@ -219,7 +219,19 @@ export default function EditPost({ params }: Props) {
       {mode === "preview" && (
           <div className="mb-4">
           <div className="prose !max-w-none border !min-h-[200px] border-gray-300 rounded px-4 py-2">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  img: ({ node, ...props }) => {
+                    if (props.src?.startsWith("https")) {
+                      return <img src={props.src} style={{ maxWidth: "50%" }} />;
+                    } else {
+                      return <img src={'blob:' + props.src} style={{ maxWidth: "50%" }} />;
+                    }
+                  },
+                }}>
+                {content}
+              </ReactMarkdown>
           </div>
           </div>
       )}

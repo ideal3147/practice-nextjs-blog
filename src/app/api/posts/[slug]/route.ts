@@ -10,6 +10,7 @@ import rehypePrism from "rehype-prism-plus";
 import rehypeStringify from "rehype-stringify";
 import rehypeExternalLinks from "rehype-external-links";
 import { createClient } from "@/utils/supabase/server";
+import { v4 as uuidv4 } from "uuid";
 
 
 export async function GET(
@@ -98,6 +99,9 @@ export async function PUT(
     const content = formData.get("content") as string;
     const isThumbnailChange = formData.get("isThumbnailChange") as string;
     const thumbnail = formData.get("thumbnail") as File | null;
+    let articleContent = content;
+
+    const timestamp = generateTimestamp();
 
     if (!title || !content) {
       return NextResponse.json(
@@ -106,50 +110,150 @@ export async function PUT(
       );
     }
 
-    const slug = (await params).slug;
-    const filePath = path.join(process.cwd(), "src", "posts", `${slug}.md`);
+    const supabase = await createClient();
+    const articleUuid = (await params).slug;
+    
+    let imageInfoMap = new Map<string, string>();
+    
+    try {
+      
+      // 既存の画像が削除されていないかを確認する
+      const { data: existingImages, error: fetchError } = await supabase
+        .from("c_article_images")
+        .select("image_id")
+        .eq("article_id", articleUuid);
+      if (fetchError) {
+        console.error("Error fetching existing images:", fetchError.message);
+        return NextResponse.json(
+          { error: "既存の画像を取得できませんでした。" },
+          { status: 500 }
+        );
+      }
 
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: "記事が見つかりません。" }, { status: 404 });
+      // m_imagesから既存画像urlの一覧を取得する
+      const { data: imageUrls, error: imageError } = await supabase
+        .from("m_images")
+        .select("image_id, file_url")
+        .in("image_id", existingImages.map((image) => image.image_id));
+      if (imageError) {
+        console.error("Error fetching image URLs:", imageError.message);
+        return NextResponse.json(
+          { error: "画像URLを取得できませんでした。" },
+          { status: 500 }
+        );
+      }
+
+      // imageUrlsの中で、記事の本文に記載されていないものを削除する
+      const deleteImageUrls = imageUrls.filter((image) => !content.includes(image.file_url));
+      if (deleteImageUrls.length > 0) {
+
+        // storageから削除する
+        for (const image of deleteImageUrls) {
+          const { error: storageError } = await supabase.storage
+            .from("md-blog")
+            .remove([`captures/${image.image_id}.png`]);
+          if (storageError) {
+            console.error("Error deleting image from storage:", storageError.message);
+            return NextResponse.json(
+              { error: "画像をストレージから削除できませんでした。" },
+              { status: 500 }
+            );
+          }
+        }
+        // m_imagesから削除する
+        const imageIdsToDelete = deleteImageUrls.map((image) => image.image_id);
+        const { error: deleteError } = await supabase
+          .from("m_images")
+          .delete()
+          .in("image_id", imageIdsToDelete);
+        if (deleteError) {
+          console.error("Error deleting images:", deleteError.message);
+          return NextResponse.json(
+            { error: "画像を削除できませんでした。" },
+            { status: 500 }
+          );
+        }
+      }
+
+      // 新規画像のアップロード
+      const imageMap: Map<string, File> = new Map<string, File>();
+
+      for (const [key, value] of formData.entries()) {
+        if (key.startsWith("image-") && value instanceof File) {
+          // keyの"image-"を取り除く
+          const imageKey = key.replace("image-", "");
+          imageMap.set(imageKey, value as File);
+        }
+      }
+      const uploadResult = await uploadImages(supabase, imageMap, content);
+      imageInfoMap = uploadResult.imageURLInfo;
+      articleContent = uploadResult.articleContent;
+    } catch (error : any) {
+      console.error("画像のアップロードに失敗:", error.message);
+      return NextResponse.json(
+        { error: "画像をストレージにアップロードできませんでした。" },
+        { status: 500 }
+      );
     }
+
 
     let thumbnailUrl = "";
-    if (isThumbnailChange) {
-
-      // サムネイル画像を保存
-      const uploadsDir = path.join(process.cwd(), "public", "images", "thumbnails");
-  
-      // アップロードディレクトリが存在しない場合は作成
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
+    if (isThumbnailChange === 'true') {
+      // storageから、既存のサムネイルの削除
+      const { error: deleteThumbnailError } = await supabase.storage
+        .from("md-blog")
+        .remove([`thumbnails/${articleUuid}.png`]);
+      if (deleteThumbnailError) {
+        console.error("Error deleting thumbnail from storage:", deleteThumbnailError.message);
+        return NextResponse.json(
+          { error: "サムネイルをストレージから削除できませんでした。" },
+          { status: 500 }
+        );
       }
-  
-      const filePath = path.join(uploadsDir, `${slug}.png`);
 
-      // ファイルを保存
-      if (thumbnail && thumbnail instanceof File) {
-        const buffer = Buffer.from(await thumbnail.arrayBuffer());
-        fs.writeFileSync(filePath, buffer);
-        thumbnailUrl = `/images/thumbnails/${slug}.png`;
+      // 新しいサムネイルURLが存在する場合、アップロード
+      if (thumbnail) {
+        const { data, error: uploadError } = await supabase.storage
+          .from("md-blog")
+          .upload(`thumbnails/${articleUuid}.png`, thumbnail, {
+            cacheControl: "3600",
+            upsert: true,
+          });
+
+        if (uploadError) {
+          console.error("サムネイルのアップロードに失敗:", uploadError.message);
+          return NextResponse.json(
+            { error: "サムネイルをストレージにアップロードできませんでした。" },
+            { status: 500 }
+          );
+        }
+
+        thumbnailUrl = supabase.storage
+          .from("md-blog")
+          .getPublicUrl(data.path).data.publicUrl;
+      } 
+    } else {
+      // m_articlesからサムネイルURLを取得
+      const { data: thumbnailData, error: thumbnailError } = await supabase
+        .from("m_articles")
+        .select("thumbnail_url")
+        .eq("article_id", articleUuid)
+        .single();
+      if (thumbnailError) {
+        console.error("Error fetching thumbnail URL:", thumbnailError.message);
+        return NextResponse.json(
+          { error: "サムネイルURLを取得できませんでした。" },
+          { status: 500 }
+        );
       }
+      thumbnailUrl = thumbnailData.thumbnail_url;
     }
 
-    if (isThumbnailChange === 'false') {
-      if (fs.existsSync(filePath)) {
-        thumbnailUrl = `/images/thumbnails/${slug}.png`;
-      }
-    }
+    // Markdownファイルのアップロード
+    await uploadMarkdownFile(supabase, articleUuid, title, date, articleContent, thumbnailUrl);
 
-    const markdownContent = 
-`---
-title: ${title}
-date: "${date}"
-image: ${thumbnailUrl || ""}
----
-
-${content}`;
-
-    fs.writeFileSync(filePath, markdownContent);
+    // データベースへの挿入
+    await insertToDatabase(supabase, articleUuid, title, thumbnailUrl, imageInfoMap, date);
 
     return NextResponse.json({ message: "記事が保存されました。" });
   } catch (error) {
@@ -160,8 +264,6 @@ ${content}`;
     );
   }
 }
-
-
 
 /**
  * Handles the deletion of an article and its associated resources.
@@ -263,5 +365,137 @@ export async function DELETE(
       { error: "記事の削除中にエラーが発生しました。" },
       { status: 500 }
     );
+  }
+}
+
+async function uploadImages(
+  supabase: any,
+  images: Map<string, File>,
+  content: string,
+): Promise<{ imageURLInfo: Map<string, string>, articleContent: string; }>  {
+  if (!(images instanceof Map && images.size == 0)) {
+    console.warn("画像ファイルがありません。");
+    return { imageURLInfo: new Map<string, string>(), articleContent: content }; 
+  }
+
+  const result = new Map<string, string>();
+
+  for (const [key, value] of images.entries()) {
+    if (!(value instanceof File)) {
+      console.warn("画像ファイルがありません。スキップします。");
+      continue;
+    }
+
+    const uuid = uuidv4();
+    const { data, error: uploadError } = await supabase.storage
+      .from("md-blog")
+      .upload(`captures/${uuid}.png`, value, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("画像のアップロードに失敗:", uploadError.message);
+      throw new Error("画像をストレージにアップロードできませんでした。");
+    }
+
+    const publicUrl = supabase.storage
+      .from("md-blog")
+      .getPublicUrl(data.path).data.publicUrl;
+
+    // 記事の中のObjectURLをPublicURLに置き換える
+    content = content.replace(key, publicUrl);
+    result.set(uuid, publicUrl);
+
+  }
+  return {imageURLInfo: result, articleContent: content};
+}
+
+// タイムスタンプを生成
+function generateTimestamp(): string {
+  return new Date().toISOString().replace(/[TZ]/g, "").slice(0, 12); // yyyymmddhhmm形式
+}
+
+// Markdownファイルをアップロード
+async function uploadMarkdownFile(
+  supabase: any,
+  uuid: string,
+  title: string,
+  timestamp: string,
+  content: string,
+  publicUrl: string
+) {
+  const markdownContent = `---
+title: ${title}
+date: "${timestamp}"
+image: ${publicUrl}
+---
+
+${content}
+`;
+
+  const { error } = await supabase.storage
+    .from("md-blog")
+    .upload(`articles/${uuid}.md`, new Blob([markdownContent]), {
+      cacheControl: "3600",
+      upsert: true,
+    });
+
+  if (error) {
+    console.error("Markdownファイルのアップロードに失敗:", error.message);
+    throw new Error("記事をストレージにアップロードできませんでした。");
+  }
+}
+
+// データベースに記事情報・画像情報を挿入
+async function insertToDatabase(
+  supabase: any,
+  articleUuid: string,
+  title: string,
+  thumbnailPublicUrl: string,
+  imageMap: Map<string, string>,
+  date: any
+) {
+
+  // 記事情報の保存
+  const { error: insertError } = await supabase
+    .from("m_articles")
+    .update([
+      {
+        thumbnail_url: thumbnailPublicUrl,
+        status: "published",
+        title: title,
+        updated_at: new Date()
+      },
+    ])
+    .eq("article_id", articleUuid);
+
+  if (insertError) {
+    console.error("記事情報の保存に失敗:", insertError.message);
+    throw new Error("記事の保存に失敗しました。");
+  }
+
+  // 画像情報の保存
+  for (const [uuid, publicUrl] of imageMap.entries()) {
+    const { error: imageInsertError } = await supabase
+      .from("m_images")
+      .insert([{ image_id: uuid, file_url: publicUrl }]);
+
+    if (imageInsertError) {
+      console.error("画像情報の保存に失敗:", imageInsertError.message);
+      throw new Error("画像情報の保存に失敗しました。");
+    }
+  }
+
+  // 記事と画像の中間テーブルにデータを保存
+  for (const [uuid] of imageMap.entries()) {
+    const { error: crossTableInsertError } = await supabase
+      .from("c_article_images")
+      .insert([{ article_id: articleUuid, image_id: uuid }]);
+    
+    if (crossTableInsertError) {
+      console.error("中間テーブルへのデータの保存に失敗:", crossTableInsertError.message);
+      throw new Error("中間テーブルへのデータの保存に失敗しました。");
+    }
   }
 }
