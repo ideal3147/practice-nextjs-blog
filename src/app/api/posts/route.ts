@@ -112,12 +112,12 @@ async function uploadMarkdownFile(
   content: string,
   publicUrl: string
 ) {
-  const markdownContent = `---
+  const markdownContent =
+`---
 title: ${title}
 date: "${timestamp}"
 image: ${publicUrl}
 ---
-
 ${content}
 `;
 
