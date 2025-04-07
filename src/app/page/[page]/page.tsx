@@ -1,51 +1,12 @@
 import PostCard from "../../../components/PostCard";
 import Pagination from "../../../components/Pagination";
-import { Metadata, ResolvingMetadata } from "next";
-import { POSTS_PER_PAGE } from "../../lib/constants";
 import { PageData, createPageData, getPostData } from "../../lib/functions";
+import { Plus } from "lucide-react";
+import Link from "next/link";
 
 type Props = {
   params: Promise<{ page: number }>;
 };
-
-/**
- * Generates metadata for a blog post page based on the provided slug.
- *
- * @param {Object} params - The parameters object containing the slug of the post.
- * @param {string} params.slug - The unique identifier for the blog post.
- * @param {ResolvingMetadata} parent - The parent metadata object being resolved.
- * @returns {Promise<Metadata>} A promise that resolves to the metadata object
- * including the title and description for the blog post.
- */
-export async function generateMetadata(props: Props, parent: ResolvingMetadata): Promise<Metadata> {
-  const params = await props.params;
-  const title = `${params.page}ページ目`;
-  return {
-    title: `${title} | ブログタイトル`,
-    description: `${title}`,
-  };
-}
-
-/**
- * Generates static paths for all blog posts.
- *
- * @returns {Promise<Array<{ path: string, slug: string }>>} A promise that resolves to an array of
- * objects containing the path and slug for each blog post.
- */
-export async function generateStaticParams() {
-  const posts = await getPostData();
-
-  const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
-
-  const pages = Array.from({ length: totalPages }, (_, i) => {
-    return {
-      path: `/page/${i + 1}`,
-      page: `${i + 1}`,
-    };
-  });
-
-  return pages;
-}
 
 /**
  * Creates the post data for a given slug.
@@ -61,7 +22,7 @@ export default async function Page(props: { params: Promise<{ page: number }> })
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">ようこそ、ブログへ！</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">👺Tatsuya' Blog</h1>
 
       <div className="grid grid-cols-1 gap-6">
         {posts.slice(pageData.start, pageData.end).map((post) => (
@@ -74,13 +35,22 @@ export default async function Page(props: { params: Promise<{ page: number }> })
         ))}
       </div>
 
-      <div className="mt-8 flex justify-center">
+      <div className="mt-10 flex justify-center">
         <Pagination
           type="page"
           pages={pageData.pages}
           currentPage={pageData.currentPage}
         />
       </div>
+      
+      {/* フローティングボタン */}
+      <Link
+        href="/new-post"
+        className="fixed bottom-8 right-8 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+        title="新規記事を作成"
+      >
+        <Plus className="w-6 h-6" />
+      </Link>
     </div>
   );
 }

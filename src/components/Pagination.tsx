@@ -48,7 +48,7 @@ const Pagination = ({ type, pages, currentPage = 1 }: PageProps) => {
               href={`/${type}/${page}`}
               className={`px-3 py-1 rounded-md border text-sm font-medium transition 
                 ${
-                  currentPage === page
+                  currentPage == page
                     ? "bg-blue-600 text-white border-blue-600"
                     : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
                 }`}
