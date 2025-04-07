@@ -4,6 +4,7 @@ import { Metadata, ResolvingMetadata } from "next";
 import { PageData, createPageData, getPostData, getTagsData } from "../../lib/functions";
 import Pagination from "../../../components/Pagination";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -86,22 +87,35 @@ export default async function TagPage(props: { params: Promise<{ slug: string }>
   );
 
   return (
-    <>
-      <div className="my-8">
-        <h1 className="text-4xl font-bold text-center my-8">Tatsuya's Blog</h1>
-        <div className="flex flex-col align-top min-h-screen w-1/2 justify-center align-center mx-auto">
-          {posts.slice(pageData.start, pageData.end).map((post) => (
-            <PostCard key={post.title} post={post} />
-          ))}
-        </div>
-        <div className='mb-3'>
-          <Pagination type={`tags/${params.slug}`} pages={pageData.pages} currentPage={pageData.currentPage} />
-        </div>
+<div className="container mx-auto px-4 py-12">
+      {/* タイトル */}
+      <h1 className="text-5xl font-bold text-center text-gray-800 mb-2">Tatsuya's Blog</h1>
+      <p className="text-center text-gray-500 text-lg mb-10">技術と日常を綴る個人ブログ</p>
 
-        <Link href="/new-post" className="fixed bottom-15 right-10 bg-blue-500 text-white px-6 py-4 rounded-full shadow-lg hover:bg-blue-600 text-xl">
-          +
-        </Link>
+      {/* 投稿一覧（レスポンシブGrid） */}
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {posts.slice(pageData.start, pageData.end).map((post) => (
+          <PostCard key={post.title} post={post} />
+        ))}
       </div>
-    </>
+
+      {/* ページネーション */}
+      <div className="flex justify-center mt-12">
+        <Pagination
+          type={`tags/${params.slug}`}
+          pages={pageData.pages}
+          currentPage={pageData.currentPage}
+        />
+      </div>
+
+      {/* 新規投稿ボタン（右下固定） */}
+      <Link
+        href="/new-post"
+        className="fixed bottom-8 right-8 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+        title="新規記事を作成"
+      >
+        <Plus className="w-6 h-6" />
+      </Link>
+    </div>
   );
 }
