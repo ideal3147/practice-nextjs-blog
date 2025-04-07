@@ -110,21 +110,22 @@ export default async function TagPage(
   const pageData: PageData = createPageData(params.page, posts.length);
 
   return (
-    <>
-      <div className="my-8">
-        <div className="row">
-          {posts.slice(pageData.start, pageData.end).map((post) => (
-            <PostCard key={post.title} post={post} />
-          ))}
-        </div>
-        <div className="mb-3">
-          <Pagination
-            type={`tags/${params.slug}`}
-            pages={pageData.pages}
-            currentPage={pageData.currentPage}
-          />
-        </div>
+    <div className="container mx-auto px-4 py-12">
+      {/* 投稿一覧 */}
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-12">
+        {posts.slice(pageData.start, pageData.end).map((post) => (
+          <PostCard key={post.title} post={post} />
+        ))}
       </div>
-    </>
+  
+      {/* ページネーション */}
+      <div className="flex justify-center mt-8">
+        <Pagination
+          type={`tags/${params.slug}`}
+          pages={pageData.pages}
+          currentPage={pageData.currentPage}
+        />
+      </div>
+    </div>
   );
 }

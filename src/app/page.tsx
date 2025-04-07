@@ -2,6 +2,7 @@ import PostCard from "../components/PostCard";
 import Pagination from "../components/Pagination";
 import { PageData, createPageData, getPostData } from "./lib/functions";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 
 export default async function Home() {
   const posts = await getPostData();
@@ -33,9 +34,10 @@ export default async function Home() {
       {/* フローティングボタン */}
       <Link
         href="/new-post"
-        className="fixed bottom-6 right-6 bg-blue-600 text-white text-3xl font-bold px-6 py-4 rounded-full shadow-lg hover:bg-blue-700 transition-all"
+        className="fixed bottom-8 right-8 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+        title="新規記事を作成"
       >
-        +
+        <Plus className="w-6 h-6" />
       </Link>
     </div>
   );
