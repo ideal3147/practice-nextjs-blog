@@ -15,7 +15,7 @@ type PostData = {
   description: string;
   date: string;
   image: string;
-  tags: string[];
+  tags: string;
   contentHtml: string;
 };
 
@@ -28,6 +28,7 @@ type PostData = {
  */
 export default function Post({ params }: Props) {
   const [postData, setPostData] = useState<PostData | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -100,7 +101,10 @@ export default function Post({ params }: Props) {
       <div className="text-gray-500 mb-4">{postData.date}</div>
 
       <div className="flex flex-wrap gap-2 mb-6">
-        {postData.tags?.map((tag) => (
+        {postData.tags?.split(",")
+        .map(tag => tag.trim())
+        .filter(tag => tag !== "")
+        .map((tag) => (
           <Link
             key={tag}
             href={`/tags/${tag}`}

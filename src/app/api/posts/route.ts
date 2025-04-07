@@ -7,6 +7,7 @@ export async function POST(request: Request) {
   const title = formData.get("title") as string;
   const content = formData.get("content") as string;
   const thumbnail = formData.get("thumbnail") as File | null;
+  const tags = formData.get("tags") as string | null;
 
   if (!title || !content) {
     return NextResponse.json(
@@ -39,11 +40,14 @@ export async function POST(request: Request) {
     imageInfoMap = uploadResult.imageURLInfo;
     const articleContent = uploadResult.articleContent;
 
+    // tagsをカンマで区切り、配列にする
+    const tagArray = tags ? JSON.parse(tags) : null;
+    
     // Markdownファイルのアップロード
-    await uploadMarkdownFile(supabase, articleUuid, title, timestamp, articleContent, thumbnailPublicUrl);
+    await uploadMarkdownFile(supabase, articleUuid, title, timestamp, articleContent, thumbnailPublicUrl, tagArray);
 
     // データベースへの挿入
-    await insertToDatabase(supabase, articleUuid, title, thumbnailPublicUrl, imageInfoMap);
+    await insertToDatabase(supabase, articleUuid, title, thumbnailPublicUrl, imageInfoMap, tagArray);
 
     return NextResponse.json({ message: "記事が保存されました！" });
   } catch (error) {
@@ -117,13 +121,15 @@ async function uploadMarkdownFile(
   title: string,
   timestamp: string,
   content: string,
-  publicUrl: string
+  publicUrl: string,
+  tags: string[] | null,
 ) {
   const markdownContent =
 `---
 title: ${title}
 date: "${timestamp}"
 image: ${publicUrl}
+tags: ${tags ? tags : "[]"}
 ---
 ${content}
 `;
@@ -148,6 +154,7 @@ async function insertToDatabase(
   title: string,
   thumbnailPublicUrl: string,
   imageMap: Map<string, string>,
+  tags: string[] | null,
 ) {
 
   // 記事情報の保存
@@ -160,6 +167,7 @@ async function insertToDatabase(
         thumbnail_url: thumbnailPublicUrl,
         status: "published",
         title: title,
+        tags: tags ? tags : null,
       },
     ]);
 
