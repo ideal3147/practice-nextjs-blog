@@ -27,7 +27,9 @@ export default async function TagPage(props: { params: Promise<{ slug: string }>
   return (
     <div className="container mx-auto px-4 py-12">
       {/* タイトル */}
-      <h1 className="text-5xl font-bold text-center text-gray-800 mb-2">🦓Tatsuya's Blog</h1>
+      <Link href="/" className="block mb-6 text-center">
+        <h1 className="text-5xl font-bold text-center text-gray-800 mb-2">🦓Tatsuya's Blog</h1>
+      </Link>
       <p className="text-center text-gray-500 text-lg mb-10">技術と日常を綴る個人ブログ</p>
 
       {/* 投稿一覧（レスポンシブGrid） */}
