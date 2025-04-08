@@ -50,6 +50,7 @@ export default function NewPostPage() {
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [imageMap, setImageMap] = useState<Record<string, File>>({});
+  const [tags, setTags] = useState("");
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -92,6 +93,10 @@ export default function NewPostPage() {
     Object.entries(imageMap).forEach(([blobUrl, file]) => {
       formData.append(`image-${blobUrl}`, file);
     });
+
+    // タグの処理
+    const uniqueTags = Array.from(new Set(tags.split(',').map(t => t.trim()).filter(Boolean)));
+    formData.append("tags", JSON.stringify(uniqueTags));
 
     // APIルートにデータを送信
     const response = await fetch("/api/posts", {
@@ -212,6 +217,24 @@ export default function NewPostPage() {
             </div>
           </div>
         )}
+
+        {/* タグ入力欄 */}
+        <div className="mb-6">
+          <label htmlFor="tags" className="block text-lg font-semibold text-gray-700 mb-2">
+            タグ（カンマ区切り）
+          </label>
+          <input
+            type="text"
+            id="tags"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="例：Next.js, Markdown, ブログ"
+            className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            カンマ（,）で区切って複数タグを入力できます。
+          </p>
+        </div>
   
         {/* 登録ボタン */}
         <div className="text-center">

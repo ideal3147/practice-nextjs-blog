@@ -1,84 +1,66 @@
-import Link from "next/link";
-import { PostItem } from "../app/lib/types/types";
+'use client';
 
-/**
- * A React component that renders a card for a blog post.
- * The card includes an optional image, the post title, and the post date.
- * It links to the detailed post page using the post's slug.
- *
- * @component
- * @param {Object} props - The props object.
- * @param {PostItem} props.post - The post data to display in the card.
- * @param {string} props.post.slug - The unique identifier for the post, used in the URL.
- * @param {string} props.post.title - The title of the post.
- * @param {string} props.post.date - The publication date of the post.
- * @param {string} [props.post.image] - The optional image URL for the post.
- *
- * @returns {JSX.Element} A clickable card component displaying the post details.
- */
-// const PostCard = ({ post }: { post: PostItem }) => {
-//   return (
-//     <Link
-//       href={`/posts/${post.slug}`}
-//       className="align-self-baseline col-lg-4 d-flex flex-column justify-content-between scale-95 hover:scale-100 ease-in duration-100"
-//     >
-//       {post.image && (
-//         <div className="rounded mx-auto shadow">
-//           <picture>
-//             <img
-//               src={`${post.image}`}
-//               width={600}
-//               height={300}
-//               alt={post.title}
-//               className="object-contain img-fluid img-thumbnail"
-//               style={{ maxWidth: "100%", height: "224px" }}
-//             />
-//           </picture>
-//           <div className="px-2 py-3 mt-auto mx-auto">
-//             <h2 className="font-bold text-lg">{post.title}</h2>
-//             <span className="badge bg-secondary text-white">{post.date}</span>
-//           </div>
-//         </div>
-//       )}
-//       {!post.image && (
-//         <div className="px-2 py-3 mt-auto mx-auto shadow rounded">
-//           <h2 className="font-bold text-lg">{post.title}</h2>
-//           <span className="badge bg-secondary text-white">{post.date}</span>
-//         </div>
-//       )}
-//     </Link>
-//   );
-// };
+import { PostItem } from '@/app/lib/types/types';
+import { useRouter } from 'next/navigation';
 
-// export default PostCard;
+export default function PostCard({ post }: { post: PostItem }) {
+  const router = useRouter();
 
+  const handleCardClick = () => {
+    router.push(`/posts/${post.slug}`);
+  };
 
-const PostCard = ({ post }: { post: PostItem }) => {
+  const handleTagClick = (e: React.MouseEvent, tag: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/tags/${encodeURIComponent(tag)}`);
+  };
+
   return (
-    <Link
-      href={`/posts/${post.slug}`}
-      className="transition transform hover:scale-[1.02] duration-200"
+    <div
+      onClick={handleCardClick}
+      className="cursor-pointer bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg transition-transform transform hover:scale-[1.02] duration-200 flex flex-col h-full"
     >
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg overflow-hidden flex flex-col h-full">
-        {post.image && (
-          <img
-            src={post.image}
-            alt={post.title}
-            className="w-full h-48 object-cover"
-          />
-        )}
-
-        <div className="p-4 flex flex-col justify-between flex-grow">
-          <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">
-            {post.title}
-          </h2>
-          <span className="inline-block bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium px-3 py-1 rounded-full self-start">
-            {post.date}
-          </span>
+      {/* サムネイル */}
+      {post.image ? (
+        <img
+          src={post.image}
+          alt={post.title}
+          className="w-full h-48 object-cover"
+        />
+      ) : (
+        <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+          No Image
         </div>
-      </div>
-    </Link>
-  );
-};
+      )}
 
-export default PostCard;
+      {/* 本文 */}
+      <div className="p-4 flex flex-col justify-between flex-grow">
+        {/* タイトル */}
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2 line-clamp-2">
+          {post.title}
+        </h2>
+
+        {/* 投稿日 */}
+        <span className="inline-block text-xs text-gray-500 mb-3">
+          {post.date}
+        </span>
+
+        {/* タグ */}
+        {post.tags && post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-auto">
+            {post.tags.map((tag, idx) => (
+              <div
+                key={idx}
+                onClick={(e) => handleTagClick(e, tag)}
+                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition cursor-pointer"
+              >
+                #{tag}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

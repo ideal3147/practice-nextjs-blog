@@ -26,7 +26,7 @@ const getPostData = async (): Promise<PostItem[]> => {
   const { data, error } = await supabase
     .from("m_articles")
     .select(
-      "article_id, title, thumbnail_url, file_url, created_at"
+      "article_id, title, thumbnail_url, file_url, tags, created_at"
     );
 
   if (error) {
@@ -42,7 +42,7 @@ const getPostData = async (): Promise<PostItem[]> => {
           description: "",
           date: mdFileInfo.created_at,
           image: mdFileInfo.thumbnail_url,
-          tags: [],
+          tags: mdFileInfo.tags?.map((tag: string) => tag.trim()).filter((tag: string) => tag !== "") || null,
           contentHtml: "",
         };
       }) || []

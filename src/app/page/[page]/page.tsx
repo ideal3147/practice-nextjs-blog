@@ -24,14 +24,10 @@ export default async function Page(props: { params: Promise<{ page: number }> })
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6 text-center">👺Tatsuya' Blog</h1>
 
-      <div className="grid grid-cols-1 gap-6">
+      {/* 投稿一覧（レスポンシブGrid） */}
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {posts.slice(pageData.start, pageData.end).map((post) => (
-          <div
-            key={post.slug}
-            className="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 transition hover:shadow-lg"
-          >
-            <PostCard post={post} />
-          </div>
+          <PostCard key={post.title} post={post} />
         ))}
       </div>
 

@@ -12,14 +12,10 @@ export default async function Home() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold text-center mb-10">🚧Tatsuya's Blog</h1>
 
-      <div className="flex flex-col gap-6">
+      {/* 投稿一覧（レスポンシブGrid） */}
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {posts.slice(pageData.start, pageData.end).map((post) => (
-          <div
-            key={post.slug}
-            className="bg-white dark:bg-gray-800 shadow-md rounded-2xl p-6 transition hover:shadow-lg"
-          >
-            <PostCard post={post} />
-          </div>
+          <PostCard key={post.title} post={post} />
         ))}
       </div>
 
