@@ -1,51 +1,66 @@
-import Link from "next/link";
-import { PostItem } from "../app/lib/types/types";
+'use client';
 
-const PostCard = ({ post }: { post: PostItem }) => {
+import { PostItem } from '@/app/lib/types/types';
+import { useRouter } from 'next/navigation';
+
+export default function PostCard({ post }: { post: PostItem }) {
+  const router = useRouter();
+
+  const handleCardClick = () => {
+    router.push(`/posts/${post.slug}`);
+  };
+
+  const handleTagClick = (e: React.MouseEvent, tag: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/tags/${encodeURIComponent(tag)}`);
+  };
+
   return (
-    <div className="transition transform hover:scale-[1.02] duration-200">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg overflow-hidden flex flex-col h-full">
-        {/* 記事全体へのリンク部分 */}
-        <Link href={`/posts/${post.slug}`}>
-          <div>
-            {post.image && (
-              <img
-                src={post.image}
-                alt={post.title}
-                className="w-full h-48 object-cover"
-              />
-            )}
+    <div
+      onClick={handleCardClick}
+      className="cursor-pointer bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg transition-transform transform hover:scale-[1.02] duration-200 flex flex-col h-full"
+    >
+      {/* サムネイル */}
+      {post.image ? (
+        <img
+          src={post.image}
+          alt={post.title}
+          className="w-full h-48 object-cover"
+        />
+      ) : (
+        <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+          No Image
+        </div>
+      )}
 
-            <div className="p-4 flex flex-col justify-between flex-grow">
-              <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">
-                {post.title}
-              </h2>
+      {/* 本文 */}
+      <div className="p-4 flex flex-col justify-between flex-grow">
+        {/* タイトル */}
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2 line-clamp-2">
+          {post.title}
+        </h2>
 
-              <span className="inline-block bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium px-3 py-1 rounded-full self-start mb-2">
-                {post.date}
-              </span>
-            </div>
-          </div>
-        </Link>
+        {/* 投稿日 */}
+        <span className="inline-block text-xs text-gray-500 mb-3">
+          {post.date}
+        </span>
 
-        {/* タグリンク部分 */}
+        {/* タグ */}
         {post.tags && post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 px-4 pb-4">
-            {post.tags.map((tag: string, index: number) => (
-              <Link
-                key={index}
-                href={`/tags/${encodeURIComponent(tag)}`}
-                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition"
+          <div className="flex flex-wrap gap-2 mt-auto">
+            {post.tags.map((tag, idx) => (
+              <div
+                key={idx}
+                onClick={(e) => handleTagClick(e, tag)}
+                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition cursor-pointer"
               >
                 #{tag}
-              </Link>
+              </div>
             ))}
           </div>
         )}
       </div>
     </div>
-
   );
-};
-
-export default PostCard;
+}
