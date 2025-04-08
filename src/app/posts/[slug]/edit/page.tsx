@@ -15,10 +15,10 @@ export default function EditPost({ params }: Props) {
   const [date, setDate] = useState("");
   const [content, setContent] = useState("");
   const [mode, setMode] = useState<"edit" | "preview">("edit");
-  const router = useRouter();
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [isThumbnailChange, setIsThumbnailChange] = useState(false);
   const [imageMap, setImageMap] = useState<Record<string, File>>({});
+  const [tags, setTags] = useState("");
 
 
   useEffect(() => {
@@ -34,6 +34,7 @@ export default function EditPost({ params }: Props) {
         setContent(data.content);
         // setThumbnail(data.image);
         setThumbnail(null);
+        setTags(data.tags); // タグをカンマ区切りの文字列に変換
       } catch (err) {
         console.error(err);
       }
@@ -87,6 +88,10 @@ export default function EditPost({ params }: Props) {
     Object.entries(imageMap).forEach(([blobUrl, file]) => {
       formData.append(`image-${blobUrl}`, file);
     });
+
+    // タグの処理
+    const uniqueTags = Array.from(new Set(tags.split(',').map(t => t.trim()).filter(Boolean)));
+    formData.append("tags", JSON.stringify(uniqueTags));
 
     const response = await fetch(`/api/posts/${(await params).slug}`, {
       method: "PUT",
@@ -221,6 +226,24 @@ export default function EditPost({ params }: Props) {
             </div>
           </div>
         )}
+
+        {/* タグ入力欄 */}
+        <div className="mb-6">
+          <label htmlFor="tags" className="block text-lg font-semibold text-gray-700 mb-2">
+            タグ（カンマ区切り）
+          </label>
+          <input
+            type="text"
+            id="tags"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="例：Next.js, Markdown, ブログ"
+            className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            カンマ（,）で区切って複数タグを入力できます。
+          </p>
+        </div>
   
         {/* 保存ボタン */}
         <div className="text-center">

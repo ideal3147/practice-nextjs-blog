@@ -106,7 +106,7 @@ export async function PUT(
 ) {
   try {
     const formData = await request.formData();
-    const { title, date, content, isThumbnailChange, thumbnail } = extractFormData(formData);
+    const { title, date, content, isThumbnailChange, thumbnail, tags } = extractFormData(formData);
     const articleUuid = (await params).slug;
 
     if (!title || !content) {
@@ -127,10 +127,10 @@ export async function PUT(
     const thumbnailUrl = await handleThumbnail(supabase, isThumbnailChange, thumbnail, articleUuid);
 
     // Upload Markdown file
-    await uploadMarkdownFile(supabase, articleUuid, title, date, updatedContent, thumbnailUrl);
+    await uploadMarkdownFile(supabase, articleUuid, title, date, updatedContent, thumbnailUrl, tags);
 
     // Update database
-    await insertToDatabase(supabase, articleUuid, title, thumbnailUrl, imageInfoMap, date);
+    await insertToDatabase(supabase, articleUuid, title, thumbnailUrl, imageInfoMap, date, tags);
 
     return NextResponse.json(
       {message: "記事が保存されました。" },
@@ -154,12 +154,18 @@ export async function PUT(
  * - `thumbnail`: The thumbnail file as a `File` object or `null` if not provided.
  */
 function extractFormData(formData: FormData) {
+
+  let tags = formData.get("tags") as string | null;
+  // tagsをカンマで区切り、配列にする
+  const tagArray = tags ? JSON.parse(tags) : null;
+
   return {
     title: formData.get("title") as string,
     date: formData.get("date") as string,
     content: formData.get("content") as string,
     isThumbnailChange: formData.get("isThumbnailChange") as string,
     thumbnail: formData.get("thumbnail") as File | null,
+    tags: tagArray
   };
 }
 
@@ -537,13 +543,15 @@ async function uploadMarkdownFile(
   title: string,
   timestamp: string,
   content: string,
-  publicUrl: string
+  publicUrl: string,
+  tags: string[] | null
 ) {
   const markdownContent =  
 `---
 title: ${title}
 date: "${generateTimestamp()}"
 image: ${publicUrl}
+tags: ${tags ? tags : "[]"}
 ---
 ${content}
 `;
@@ -568,7 +576,8 @@ async function insertToDatabase(
   title: string,
   thumbnailPublicUrl: string,
   imageMap: Map<string, string>,
-  date: any
+  date: any,
+  tags: string[] | null
 ) {
 
   // 記事情報の保存
@@ -579,6 +588,7 @@ async function insertToDatabase(
         thumbnail_url: thumbnailPublicUrl,
         status: "published",
         title: title,
+        tags: tags ? tags : null,
         updated_at: new Date()
       },
     ])

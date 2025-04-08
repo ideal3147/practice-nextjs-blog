@@ -95,8 +95,8 @@ export default function NewPostPage() {
     });
 
     // タグの処理
-    const tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
-    formData.append("tags", JSON.stringify(tagArray));
+    const uniqueTags = Array.from(new Set(tags.split(',').map(t => t.trim()).filter(Boolean)));
+    formData.append("tags", JSON.stringify(uniqueTags));
 
     // APIルートにデータを送信
     const response = await fetch("/api/posts", {
