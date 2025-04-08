@@ -22,7 +22,11 @@ export default async function Page(props: { params: Promise<{ page: number }> })
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">👺Tatsuya' Blog</h1>
+      {/* タイトル */}
+      <Link href="/" className="block mb-6 text-center">
+        <h1 className="text-5xl font-bold text-center text-gray-800 mb-2">👺Tatsuya's Blog</h1>
+      </Link>
+      <p className="text-center text-gray-500 text-lg mb-10">技術と日常を綴る個人ブログ</p>
 
       {/* 投稿一覧（レスポンシブGrid） */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
