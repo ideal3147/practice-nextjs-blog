@@ -1,6 +1,7 @@
 'use client';
 
 import { PostItem } from '@/app/lib/types/types';
+import { formatDate } from '@/utils/timestamp';
 import { useRouter } from 'next/navigation';
 
 export default function PostCard({ post }: { post: PostItem }) {
@@ -43,7 +44,7 @@ export default function PostCard({ post }: { post: PostItem }) {
 
         {/* 投稿日 */}
         <span className="inline-block text-xs text-gray-500 mb-3">
-          {post.date}
+          {formatDate(post.date)}
         </span>
 
         {/* タグ */}
