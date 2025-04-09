@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { formatDate } from "@/utils/timestamp";
 
 
 type Props = {
@@ -98,7 +99,7 @@ export default function Post({ params }: Props) {
       )}
 
       <h1 className="text-4xl font-bold mb-2">{postData.title}</h1>
-      <div className="text-gray-500 mb-4">{postData.date}</div>
+      <div className="text-gray-500 mb-4">{formatDate(postData.date)}</div>
 
       <div className="flex flex-wrap gap-2 mb-6">
         {postData.tags?.split(",")
