@@ -3384,6 +3384,7 @@ postcss@8.4.31:
     "@supabase/supabase-js" "^2.49.4"
     gray-matter "^4.0.3"
     install "^0.13.0"
+    lucide-react "^0.487.0"
     marked "^15.0.7"
     next "15.2.4"
     practice-nextjs-blog "file:"
