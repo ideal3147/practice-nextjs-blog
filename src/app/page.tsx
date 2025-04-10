@@ -3,6 +3,7 @@ import Pagination from "../components/Pagination";
 import { PageData, createPageData, getPostData } from "./lib/functions";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import SignOutButton from "@/components/SignOutButton";
 
 export default async function Home() {
   const posts = await getPostData();
@@ -10,6 +11,9 @@ export default async function Home() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+
+    <SignOutButton /> 
+
       {/* タイトル */}
       <Link href="/" className="block mb-6 text-center">
         <h1 className="text-5xl font-bold text-center text-gray-800 mb-2">🚧Tatsuya's Blog</h1>
