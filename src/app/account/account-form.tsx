@@ -3,8 +3,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { type User } from '@supabase/supabase-js'
 import Avatar from './avatar'
-import SignOutButton from '@/components/SignOutButton'
-import router from 'next/router'
 import { redirect } from 'next/navigation'
 
 // ...
