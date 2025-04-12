@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
+import { LogIn, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -32,13 +33,14 @@ export default function SignInOrOutButton() {
   return (
     <button
       onClick={isLoggedIn ? handleSignOut : handleSignIn}
-      className={`absolute top-6 right-6 text-sm px-4 py-2 rounded-lg shadow transition-colors
+      className={`absolute top-6 right-6 flex text-sm px-4 py-2 rounded-lg shadow transition-colors
         ${isLoggedIn 
           ? 'bg-red-500 hover:bg-red-600 text-white'
           : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
       title={isLoggedIn ? 'Sign Out' : 'Sign In'}
     >
-      {isLoggedIn ? 'Sign Out' : 'Sign In'}
+      {isLoggedIn ? <LogOut size={18} /> : <LogIn size={18} />}
+      {isLoggedIn ? 'Sign Out' : ' Sign In'}
     </button>
   );
 }
