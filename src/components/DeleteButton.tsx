@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { User } from '@supabase/supabase-js'
+import { redirect } from 'next/navigation'
 
-type DeleteButtonProps = {
-  onDelete: () => Promise<void>
+interface Props {
+  slug: string;
 }
 
-export default function DeleteButton({ onDelete }: DeleteButtonProps) {
+export default function DeleteButton({ slug }: Props) {
   const [user, setUser] = useState<User | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -25,7 +26,14 @@ export default function DeleteButton({ onDelete }: DeleteButtonProps) {
   const handleClick = async () => {
     try {
       setIsDeleting(true)
-      await onDelete()
+      if (!window.confirm("本当に削除してよろしいですか？")) return;
+      const response = await fetch(`/api/posts/${slug}`, { method: "DELETE" });
+      if (response.ok) {
+        alert("記事が削除されました。");
+        redirect("/");
+      } else {
+        alert("記事の削除に失敗しました。");
+      }
     } finally {
       setIsDeleting(false)
     }

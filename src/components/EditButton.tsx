@@ -1,32 +1,24 @@
-'use client'
+// components/EditButton.tsx
+import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
+import Link from "next/link";
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
-import { User } from '@supabase/supabase-js'
+interface Props {
+  slug: string;
+}
 
-export default function EditButton({
-  onClick,
-}: {
-  onClick: () => void
-}) {
-  const [user, setUser] = useState<User | null>(null)
+export default async function EditButton({ slug }: Props) {
+  const supabase = createClient();
+  const { data } = await (await supabase).auth.getUser();
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data } = await createClient().auth.getUser()
-      setUser(data.user)
-    }
-    getUser()
-  }, [])
-
-  if (!user) return null
+  if (!data.user) return null;
 
   return (
-    <button
-      onClick={onClick}
+    <Link
+      href={`/posts/${slug}/edit`}
       className="px-4 py-2 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-500 hover:text-white transition"
     >
       編集
-    </button>
-  )
+    </Link>
+  );
 }
