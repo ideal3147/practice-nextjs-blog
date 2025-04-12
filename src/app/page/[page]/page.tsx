@@ -1,10 +1,10 @@
 import PostCard from "../../../components/PostCard";
 import Pagination from "../../../components/Pagination";
 import { PageData, createPageData, getPostData } from "../../lib/functions";
-import { Plus } from "lucide-react";
 import Link from "next/link";
 import SignInOrOutButton from "@/components/SignInOrOutButton";
 import UserAvatar from "@/components/UserAvatar";
+import NewPostButton from "@/components/NewPostButton";
 
 type Props = {
   params: Promise<{ page: number }>;
@@ -49,14 +49,7 @@ export default async function Page(props: { params: Promise<{ page: number }> })
         />
       </div>
       
-      {/* フローティングボタン */}
-      <Link
-        href="/new-post"
-        className="fixed bottom-8 right-8 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
-        title="新規記事を作成"
-      >
-        <Plus className="w-6 h-6" />
-      </Link>
+      <NewPostButton/>
     </div>
   );
 }
