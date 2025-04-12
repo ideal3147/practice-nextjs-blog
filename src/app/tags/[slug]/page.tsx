@@ -2,7 +2,6 @@ import PostCard from "../../../components/PostCard";
 import { PageData, createPageData, getTagsData } from "../../lib/functions";
 import Pagination from "../../../components/Pagination";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import SignInOrOutButton from "@/components/SignInOrOutButton";
 import UserAvatar from "@/components/UserAvatar";
 import NewPostButton from "@/components/NewPostButton";
