@@ -22,7 +22,6 @@ export default function SignInOrOutButton() {
     await supabase.auth.signOut();
     setUser(null);
     router.push("/login");
-    // router.refresh(); // or router.push("/signin") if you have a login page
   };
 
   const handleSignIn = async () => {
