@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { formatDate } from "@/utils/timestamp";
 import EditButton from "@/components/EditButton";
@@ -32,7 +32,6 @@ type PostData = {
 export default function Post({ params }: Props) {
   const [postData, setPostData] = useState<PostData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     const fetchPostData = async () => {
@@ -50,7 +49,7 @@ export default function Post({ params }: Props) {
   }, []);
 
   const handleEdit = async () => {
-    router.push(`/posts/${(await params).slug}/edit`);
+    redirect(`/posts/${(await params).slug}/edit`);
   };
 
   const handleDelete = async () => {
@@ -58,7 +57,7 @@ export default function Post({ params }: Props) {
     const response = await fetch(`/api/posts/${(await params).slug}`, { method: "DELETE" });
     if (response.ok) {
       alert("記事が削除されました。");
-      router.push("/");
+      redirect("/");
     } else {
       alert("記事の削除に失敗しました。");
     }
