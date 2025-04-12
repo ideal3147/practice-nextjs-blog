@@ -3,6 +3,8 @@ import Pagination from "../../../components/Pagination";
 import { PageData, createPageData, getPostData } from "../../lib/functions";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import SignOutButton from "@/components/SignOutButton";
+import UserAvatar from "@/components/UserAvatar";
 
 type Props = {
   params: Promise<{ page: number }>;
@@ -22,6 +24,10 @@ export default async function Page(props: { params: Promise<{ page: number }> })
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+
+      <UserAvatar/>
+      <SignOutButton /> 
+      
       {/* タイトル */}
       <Link href="/" className="block mb-6 text-center">
         <h1 className="text-5xl font-bold text-center text-gray-800 mb-2">👺Tatsuya's Blog</h1>

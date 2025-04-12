@@ -3,6 +3,8 @@ import { PageData, createPageData, getTagsData } from "../../lib/functions";
 import Pagination from "../../../components/Pagination";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import SignOutButton from "@/components/SignOutButton";
+import UserAvatar from "@/components/UserAvatar";
 
 /**
  * Asynchronous React component that renders a tag-specific page displaying a list of posts
@@ -26,6 +28,10 @@ export default async function TagPage(props: { params: Promise<{ slug: string }>
 
   return (
     <div className="container mx-auto px-4 py-12">
+
+      <UserAvatar/>
+      <SignOutButton /> 
+      
       {/* タイトル */}
       <Link href="/" className="block mb-6 text-center">
         <h1 className="text-5xl font-bold text-center text-gray-800 mb-2">🦓Tatsuya's Blog</h1>
