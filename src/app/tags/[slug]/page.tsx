@@ -3,7 +3,7 @@ import { PageData, createPageData, getTagsData } from "../../lib/functions";
 import Pagination from "../../../components/Pagination";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import SignOutButton from "@/components/SignOutButton";
+import SignInOrOutButton from "@/components/SignInOrOutButton";
 import UserAvatar from "@/components/UserAvatar";
 
 /**
@@ -30,7 +30,7 @@ export default async function TagPage(props: { params: Promise<{ slug: string }>
     <div className="container mx-auto px-4 py-12">
 
       <UserAvatar/>
-      <SignOutButton /> 
+      <SignInOrOutButton /> 
       
       {/* タイトル */}
       <Link href="/" className="block mb-6 text-center">

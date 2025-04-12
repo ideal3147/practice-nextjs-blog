@@ -3,7 +3,7 @@ import Pagination from "../components/Pagination";
 import { PageData, createPageData, getPostData } from "./lib/functions";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import SignOutButton from "@/components/SignOutButton";
+import SignInOrOutButton from "@/components/SignInOrOutButton";
 import UserAvatar from "@/components/UserAvatar";
 
 export default async function Home() {
@@ -14,7 +14,7 @@ export default async function Home() {
     <div className="max-w-4xl mx-auto px-4 py-8">
 
       <UserAvatar/>
-      <SignOutButton /> 
+      <SignInOrOutButton /> 
 
       {/* タイトル */}
       <Link href="/" className="block mb-6 text-center">
