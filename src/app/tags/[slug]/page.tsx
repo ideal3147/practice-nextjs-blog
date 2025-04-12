@@ -3,6 +3,9 @@ import { PageData, createPageData, getTagsData } from "../../lib/functions";
 import Pagination from "../../../components/Pagination";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import SignInOrOutButton from "@/components/SignInOrOutButton";
+import UserAvatar from "@/components/UserAvatar";
+import NewPostButton from "@/components/NewPostButton";
 
 /**
  * Asynchronous React component that renders a tag-specific page displaying a list of posts
@@ -26,6 +29,10 @@ export default async function TagPage(props: { params: Promise<{ slug: string }>
 
   return (
     <div className="container mx-auto px-4 py-12">
+
+      <UserAvatar/>
+      <SignInOrOutButton /> 
+      
       {/* タイトル */}
       <Link href="/" className="block mb-6 text-center">
         <h1 className="text-5xl font-bold text-center text-gray-800 mb-2">🦓Tatsuya's Blog</h1>
@@ -48,14 +55,7 @@ export default async function TagPage(props: { params: Promise<{ slug: string }>
         />
       </div>
 
-      {/* 新規投稿ボタン（右下固定） */}
-      <Link
-        href="/new-post"
-        className="fixed bottom-8 right-8 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
-        title="新規記事を作成"
-      >
-        <Plus className="w-6 h-6" />
-      </Link>
+      <NewPostButton/>
     </div>
   );
 }
