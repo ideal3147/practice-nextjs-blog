@@ -14,14 +14,14 @@ export default function Avatar({
   size: number
   onUpload: (url: string) => void
 }) {
-  const supabase = createClient()
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(url)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>("")
   const [uploading, setUploading] = useState(false)
+  const supabase = createClient()
 
   useEffect(() => {
-    async function downloadImage(path: string) {
+    async function downloadImage(uid: string) {
       try {
-        const { data, error } = await supabase.storage.from('avatars').download(path)
+        const { data, error } = await supabase.storage.from('md-blog').download(`avatars/${uid}.png`)
         if (error) throw error
 
         const url = URL.createObjectURL(data)
@@ -44,10 +44,18 @@ export default function Avatar({
 
       const file = event.target.files[0]
       const fileExt = file.name.split('.').pop()
-      const filePath = `${uid}-${Math.random()}.${fileExt}`
+      const filePath = `avatars/${uid}.${fileExt}`
 
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file)
+      const {error: deleteError} = await supabase.storage.from('md-blog').remove([filePath]);
+      const { data: data, error: uploadError } = await supabase.storage.from('md-blog').upload(filePath, file)
       if (uploadError) throw uploadError
+
+      const publicUrl = supabase.storage
+      .from("md-blog")
+      .getPublicUrl(data.path).data.publicUrl;
+
+      const {error: updateError} = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', uid)
+      if (updateError) throw updateError
 
       onUpload(filePath)
     } catch (error) {

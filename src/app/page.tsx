@@ -4,6 +4,7 @@ import { PageData, createPageData, getPostData } from "./lib/functions";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import SignOutButton from "@/components/SignOutButton";
+import UserAvatar from "@/components/UserAvatar";
 
 export default async function Home() {
   const posts = await getPostData();
@@ -12,7 +13,8 @@ export default async function Home() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
 
-    <SignOutButton /> 
+      <UserAvatar/>
+      <SignOutButton /> 
 
       {/* タイトル */}
       <Link href="/" className="block mb-6 text-center">

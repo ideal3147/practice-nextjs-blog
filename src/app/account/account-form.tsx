@@ -54,12 +54,10 @@ export default function AccountForm({ user }: { user: User | null }) {
   async function updateProfile({
     username,
     website,
-    avatar_url,
   }: {
     username: string | null
     fullname: string | null
     website: string | null
-    avatar_url: string | null
   }) {
     try {
       setLoading(true)
@@ -69,7 +67,6 @@ export default function AccountForm({ user }: { user: User | null }) {
         full_name: fullname,
         username,
         website,
-        avatar_url,
         updated_at: new Date().toISOString(),
       })
       if (error) throw error;
@@ -86,11 +83,11 @@ export default function AccountForm({ user }: { user: User | null }) {
 
         <Avatar
             uid={user?.id ?? null}
-            url={avatar_url}
+            url={user?.id ?? null}
             size={150}
             onUpload={(url) => {
             setAvatarUrl(url)
-            updateProfile({ fullname, username, website, avatar_url: url })
+            updateProfile({ fullname, username, website })
             }}
         />
       {/* ... */}
@@ -126,7 +123,7 @@ export default function AccountForm({ user }: { user: User | null }) {
       </div>
       <div>
         <button
-          onClick={() => updateProfile({ fullname, username, website, avatar_url })}
+          onClick={() => updateProfile({ fullname, username, website})}
           disabled={loading}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md shadow"
         >
