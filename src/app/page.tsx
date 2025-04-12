@@ -2,9 +2,9 @@ import PostCard from "../components/PostCard";
 import Pagination from "../components/Pagination";
 import { PageData, createPageData, getPostData } from "./lib/functions";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import SignInOrOutButton from "@/components/SignInOrOutButton";
 import UserAvatar from "@/components/UserAvatar";
+import NewPostButton from "@/components/NewPostButton";
 
 export default async function Home() {
   const posts = await getPostData();
@@ -13,8 +13,10 @@ export default async function Home() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
 
+    <div className="flex justify-end items-center gap-4 mb-6">
       <UserAvatar/>
       <SignInOrOutButton /> 
+    </div>
 
       {/* タイトル */}
       <Link href="/" className="block mb-6 text-center">
@@ -37,14 +39,7 @@ export default async function Home() {
         />
       </div>
 
-      {/* フローティングボタン */}
-      <Link
-        href="/new-post"
-        className="fixed bottom-8 right-8 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
-        title="新規記事を作成"
-      >
-        <Plus className="w-6 h-6" />
-      </Link>
+     <NewPostButton />
     </div>
   );
 }
