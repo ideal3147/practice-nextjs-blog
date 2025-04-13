@@ -1,6 +1,4 @@
-// components/EditButton.tsx
 import { createClient } from "@/utils/supabase/server";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 
 interface Props {
