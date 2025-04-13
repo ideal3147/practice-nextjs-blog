@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import BackButton from "@/components/BackButton";
 
 /**
  * A React component for creating and submitting a new blog post.
@@ -119,133 +120,131 @@ export default function NewPostPage() {
     <div className="container mx-auto my-12 px-4">
       <h1 className="text-4xl font-bold text-center text-gray-800 mb-6">📝 新しい記事を作成</h1>
   
-      <div className="max-w-2xl mx-auto mb-6">
-        <Link href="/" className="text-blue-600 hover:underline text-base flex items-center gap-1">
-          ← 戻る
-        </Link>
-      </div>
-  
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg"
-      >
-        {/* タイトル */}
-        <div className="mb-6">
-          <label htmlFor="title" className="block text-lg font-semibold text-gray-700 mb-2">
-            タイトル
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            placeholder="例：Markdownでブログを作る方法"
-            className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-  
-        {/* サムネイル */}
-        <div className="mb-6">
-          <label htmlFor="thumbnail" className="block text-lg font-semibold text-gray-700 mb-2">
-            サムネイル画像
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleThumbnailChange}
-            className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-          />
-        </div>
-  
-        {/* 編集/プレビュー切り替え */}
-        <div className="flex mb-4 border-b">
-          <button
-            type="button"
-            onClick={() => setMode("edit")}
-            className={`px-4 py-2 font-medium ${
-              mode === "edit"
-                ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-gray-400 hover:text-blue-500"
-            } transition`}
-          >
-            編集
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("preview")}
-            className={`px-4 py-2 font-medium ${
-              mode === "preview"
-                ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-gray-400 hover:text-blue-500"
-            } transition`}
-          >
-            プレビュー
-          </button>
-        </div>
-  
-        {/* 編集モード */}
-        {mode === "edit" && (
+      <div className="max-w-2xl mx-auto">
+        <BackButton />
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-8 rounded-xl shadow-lg"
+        >
+          {/* タイトル */}
           <div className="mb-6">
-            <textarea
-              id="content"
-              rows={12}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              onPaste={handlePaste}
+
+            <label htmlFor="title" className="block text-lg font-semibold text-gray-700 mb-2">
+              タイトル
+            </label>
+            <input
+              type="text"
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               required
-              placeholder="本文をMarkdown形式で入力してください..."
-              className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[200px]"
+              placeholder="例：Markdownでブログを作る方法"
+              className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-        )}
-  
-        {/* プレビューモード */}
-        {mode === "preview" && (
-          <div className="mb-6 border rounded-md p-4 bg-gray-50">
-            <div className="prose prose-blue max-w-none min-h-[200px] text-gray-800">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  img: ({ node, ...props }) => (
-                    <img src={'blob:' + props.src} style={{ maxWidth: "50%" }} />
-                  ),
-                }}
-              >
-                {content}
-              </ReactMarkdown>
-            </div>
+    
+          {/* サムネイル */}
+          <div className="mb-6">
+            <label htmlFor="thumbnail" className="block text-lg font-semibold text-gray-700 mb-2">
+              サムネイル画像
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleThumbnailChange}
+              className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
           </div>
-        )}
+    
+          {/* 編集/プレビュー切り替え */}
+          <div className="flex mb-4 border-b">
+            <button
+              type="button"
+              onClick={() => setMode("edit")}
+              className={`px-4 py-2 font-medium ${
+                mode === "edit"
+                  ? "border-b-2 border-blue-500 text-blue-600"
+                  : "text-gray-400 hover:text-blue-500"
+              } transition`}
+            >
+              編集
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("preview")}
+              className={`px-4 py-2 font-medium ${
+                mode === "preview"
+                  ? "border-b-2 border-blue-500 text-blue-600"
+                  : "text-gray-400 hover:text-blue-500"
+              } transition`}
+            >
+              プレビュー
+            </button>
+          </div>
+    
+          {/* 編集モード */}
+          {mode === "edit" && (
+            <div className="mb-6">
+              <textarea
+                id="content"
+                rows={12}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onPaste={handlePaste}
+                required
+                placeholder="本文をMarkdown形式で入力してください..."
+                className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[200px]"
+              />
+            </div>
+          )}
+    
+          {/* プレビューモード */}
+          {mode === "preview" && (
+            <div className="mb-6 border rounded-md p-4 bg-gray-50">
+              <div className="prose prose-blue max-w-none min-h-[200px] text-gray-800">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    img: ({ node, ...props }) => (
+                      <img src={'blob:' + props.src} style={{ maxWidth: "50%" }} />
+                    ),
+                  }}
+                >
+                  {content}
+                </ReactMarkdown>
+              </div>
+            </div>
+          )}
 
-        {/* タグ入力欄 */}
-        <div className="mb-6">
-          <label htmlFor="tags" className="block text-lg font-semibold text-gray-700 mb-2">
-            タグ（カンマ区切り）
-          </label>
-          <input
-            type="text"
-            id="tags"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="例：Next.js, Markdown, ブログ"
-            className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <p className="text-sm text-gray-500 mt-1">
-            カンマ（,）で区切って複数タグを入力できます。
-          </p>
-        </div>
-  
-        {/* 登録ボタン */}
-        <div className="text-center">
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-md shadow-md transition focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            登録する
-          </button>
-        </div>
-      </form>
+          {/* タグ入力欄 */}
+          <div className="mb-6">
+            <label htmlFor="tags" className="block text-lg font-semibold text-gray-700 mb-2">
+              タグ（カンマ区切り）
+            </label>
+            <input
+              type="text"
+              id="tags"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="例：Next.js, Markdown, ブログ"
+              className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              カンマ（,）で区切って複数タグを入力できます。
+            </p>
+          </div>
+    
+          {/* 登録ボタン */}
+          <div className="text-center">
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-md shadow-md transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              登録する
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );   
 }
