@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { v4 as uuidv4 } from "uuid";
+import { generateTimestamp } from "@/utils/timestamp";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -69,18 +70,6 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
-
-// タイムスタンプを生成
-function generateTimestamp(): string {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-
-  return `${year}/${month}/${day}/${hours}:${minutes}`;
 }
 
 // サムネイルをアップロード
@@ -252,8 +241,4 @@ async function uploadImages(
 
   }
   return {imageURLInfo: result, articleContent: content};
-}
-
-function useState(arg0: string): [any, any] {
-  throw new Error("Function not implemented.");
 }

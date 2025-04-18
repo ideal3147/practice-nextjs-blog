@@ -4,6 +4,7 @@ import { formatDate } from "@/utils/timestamp";
 import EditButton from "@/components/EditButton";
 import DeleteButton from "@/components/DeleteButton";
 import { headers } from "next/headers";
+import BackButton from "@/components/BackButton";
 
 
 type Props = {
@@ -39,10 +40,13 @@ export default async function Post({ params }: Props) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="flex justify-end gap-4 mb-6">
+    <div className="flex justify-between items-center mb-6">
+      <BackButton />
+      <div className="flex gap-4">
         <EditButton slug={(await params).slug} />
         <DeleteButton slug={(await params).slug} />
       </div>
+    </div>
 
       {postData.image && (
         <div className="mb-6 rounded-lg shadow overflow-hidden">
