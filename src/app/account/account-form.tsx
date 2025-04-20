@@ -5,8 +5,6 @@ import { type User } from '@supabase/supabase-js'
 import Avatar from './avatar'
 import { redirect } from 'next/navigation'
 
-// ...
-
 export default function AccountForm({ user }: { user: User | null }) {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
@@ -95,6 +93,7 @@ export default function AccountForm({ user }: { user: User | null }) {
       <div>
         <label htmlFor="email">Email</label>
         <input
+          id="email"
           type="email"
           value={user?.email || ''}
           disabled
