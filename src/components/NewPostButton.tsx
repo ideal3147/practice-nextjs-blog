@@ -26,6 +26,7 @@ export default function NewPostButton() {
       title="新規記事を作成"
     >
       <Plus className="w-6 h-6" />
+      <span className="sr-only">新規記事を作成</span>
     </Link>
   )
 }

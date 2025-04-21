@@ -35,3 +35,13 @@ export type PageData = {
   end: number;
   pages: number[];
 };
+
+
+/**
+ * Props for the BackButton component.
+ *
+ * @property {string} [href] - Optional URL to navigate to when the back button is clicked.
+ */
+export type BackButtonProps = {
+  href?: string;
+};
