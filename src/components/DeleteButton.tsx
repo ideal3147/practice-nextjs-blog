@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { User } from '@supabase/supabase-js'
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 interface Props {
   slug: string;
@@ -12,6 +12,7 @@ interface Props {
 export default function DeleteButton({ slug }: Props) {
   const [user, setUser] = useState<User | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -30,7 +31,7 @@ export default function DeleteButton({ slug }: Props) {
       const response = await fetch(`/api/posts/${slug}`, { method: "DELETE" });
       if (response.ok) {
         alert("記事が削除されました。");
-        redirect("/");
+        router.push("/")
       } else {
         alert("記事の削除に失敗しました。");
       }
