@@ -155,7 +155,7 @@ export async function PUT(
  */
 function extractFormData(formData: FormData) {
 
-  let tags = formData.get("tags") as string | null;
+  const tags = formData.get("tags") as string | null;
   // tagsをカンマで区切り、配列にする
   const tagArray = tags ? JSON.parse(tags) : null;
 
