@@ -20,7 +20,7 @@ export default async function Home() {
 
       {/* タイトル */}
       <Link href="/" className="block mb-6 text-center">
-        <h1 className="text-5xl font-bold text-center text-gray-800 mb-2">🚧Tatsuya's Blog</h1>
+        <h1 className="text-5xl font-bold text-center text-gray-800 mb-2">🚧Avocado.dev</h1>
       </Link>
       <p className="text-center text-gray-500 text-lg mb-10">技術と日常を綴る個人ブログ</p>
 
