@@ -5,11 +5,21 @@ import EditButton from "@/components/EditButton";
 import DeleteButton from "@/components/DeleteButton";
 import { headers } from "next/headers";
 import BackButton from "@/components/BackButton";
+import { createClient } from "@/utils/supabase/client";
 
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateStaticParams() {
+  const supabase = createClient()
+  const { data: posts } = await supabase.from('articles').select('slug');
+
+  return posts?.map(post => ({
+    slug: post.slug
+  })) || [];
+}
 
 /**
  * The component for rendering a blog post page.
