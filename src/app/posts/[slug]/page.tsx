@@ -14,10 +14,10 @@ type Props = {
 
 export async function generateStaticParams() {
   const supabase = createClient()
-  const { data: posts } = await supabase.from('articles').select('slug');
+  const { data: posts } = await supabase.from('m_articles').select('article_id');
 
   return posts?.map(post => ({
-    slug: post.slug
+    slug: post.article_id
   })) || [];
 }
 
