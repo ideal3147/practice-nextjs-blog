@@ -6,7 +6,6 @@ import {
 } from "../../../lib/functions";
 import Pagination from "../../../../components/Pagination";
 
-
 /**
  * Retrieves post data for a specific tag and page.
  * 
