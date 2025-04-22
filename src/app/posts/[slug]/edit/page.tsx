@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import BackButton from "@/components/BackButton";
@@ -211,7 +210,7 @@ export default function EditPost({ params }: Props) {
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    img: ({ node, ...props }) => {
+                    img: ({ ...props }) => {
                       const src = props.src?.startsWith("https") ? props.src : "blob:" + props.src;
                       return <img src={src} style={{ maxWidth: "50%" }} />;
                     },

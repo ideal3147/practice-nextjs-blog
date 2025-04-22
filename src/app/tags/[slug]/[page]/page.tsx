@@ -1,6 +1,6 @@
 import PostCard from "../../../../components/PostCard";
 import { PostItem } from "../../../lib/types/types";
-import { Metadata, ResolvingMetadata } from "next";
+import { Metadata } from "next";
 import {
   PageData,
   createPageData,
@@ -23,7 +23,7 @@ type Props = {
  * The title is formatted as "{tag} - {page}ページ目 | Nemutai".
  * The description is set to the decoded tag value.
  */
-export async function generateMetadata(props: Props, parent: ResolvingMetadata): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
   const params = await props.params;
   const tag = decodeURIComponent(params.slug);
   const title = `${tag} - ${params.page}ページ目 | Nemutai`;

@@ -131,7 +131,7 @@ export async function PUT(
     await uploadMarkdownFile(supabase, articleUuid, title, date, updatedContent, thumbnailUrl, tags);
 
     // Update database
-    await insertToDatabase(supabase, articleUuid, title, thumbnailUrl, imageInfoMap, date, tags);
+    await insertToDatabase(supabase, articleUuid, title, thumbnailUrl, imageInfoMap, tags);
 
     return NextResponse.json(
       {message: "記事が保存されました。" },
@@ -216,7 +216,7 @@ async function deleteUnusedImages(supabase: SupabaseClient, content: string, art
   const { data: imageUrls, error: imageError } = await supabase
     .from("m_images")
     .select("image_id, file_url")
-    .in("image_id", existingImages.map((image: { image_id: any; }) => image.image_id));
+    .in("image_id", existingImages.map((image: { image_id: string; }) => image.image_id));
 
   if (imageError) throw new Error("画像URLを取得できませんでした。");
 
@@ -238,7 +238,7 @@ async function deleteUnusedImages(supabase: SupabaseClient, content: string, art
  * 
  * await deleteImagesFromStorageAndDatabase(supabase, deleteImageUrls);
  */
-async function deleteImagesFromStorageAndDatabase(supabase: SupabaseClient, deleteImageUrls: any[]) {
+async function deleteImagesFromStorageAndDatabase(supabase: SupabaseClient, deleteImageUrls: Array<{ image_id: string, file_url: string }>) {
   for (const image of deleteImageUrls) {
     const { error: storageError } = await supabase.storage
       .from("md-blog")
@@ -407,7 +407,7 @@ export async function DELETE(
     const supabase = await createClient();
 
     // Helper function to handle errors
-    const handleError = (message: string, error: any) => {
+    const handleError = (message: string, error: Error) => {
       console.error(message, error.message);
       return NextResponse.json({ error: message }, { status: 500 });
     };
@@ -577,7 +577,6 @@ async function insertToDatabase(
   title: string,
   thumbnailPublicUrl: string,
   imageMap: Map<string, string>,
-  date: any,
   tags: string[] | null
 ) {
 

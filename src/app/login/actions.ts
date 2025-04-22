@@ -44,8 +44,3 @@ export async function signup(formData: FormData) {
   revalidatePath('/', 'layout')
   redirect('/account')
 }
-
-export async function skip(formData: FormData) {
-  redirect('/')
-}
-

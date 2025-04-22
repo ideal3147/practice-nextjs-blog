@@ -55,13 +55,13 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("エラーが発生しました:", error);
     // supabase storageに保存した記事の削除処理を追加する
-    const { error: deleteError } = await supabase.storage
+    await supabase.storage
       .from("md-blog")
       .remove([`articles/${articleUuid}.md`, `thumbnails/${articleUuid}.png`]);
 
     // supabase databaseに保存した画像の削除処理を追加する
     for (const [uuid] of imageInfoMap.entries()) {
-      const { error: deleteImageError } = await supabase.storage
+      await supabase.storage
         .from("md-blog")
         .remove([`captures/${uuid}.png`]);
     }

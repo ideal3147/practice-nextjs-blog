@@ -46,7 +46,7 @@ export default function Avatar({
       const fileExt = file.name.split('.').pop()
       const filePath = `avatars/${uid}.${fileExt}`
 
-      const {error: deleteError} = await supabase.storage.from('md-blog').remove([filePath]);
+      await supabase.storage.from('md-blog').remove([filePath]);
       const { data: data, error: uploadError } = await supabase.storage.from('md-blog').upload(filePath, file)
       if (uploadError) throw uploadError
 
@@ -59,6 +59,7 @@ export default function Avatar({
 
       onUpload(filePath)
     } catch (error) {
+      console.log(error)
       alert('アバターのアップロード中にエラーが発生しました')
     } finally {
       setUploading(false)

@@ -6,10 +6,6 @@ import SignInOrOutButton from "@/components/SignInOrOutButton";
 import UserAvatar from "@/components/UserAvatar";
 import NewPostButton from "@/components/NewPostButton";
 
-type Props = {
-  params: Promise<{ page: number }>;
-};
-
 /**
  * Creates the post data for a given slug.
  *

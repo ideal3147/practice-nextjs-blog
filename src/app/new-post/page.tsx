@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import BackButton from "@/components/BackButton";
@@ -205,7 +204,7 @@ export default function NewPostPage() {
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    img: ({ node, ...props }) => (
+                    img: ({ ...props }) => (
                       <img src={'blob:' + props.src} style={{ maxWidth: "50%" }} />
                     ),
                   }}
