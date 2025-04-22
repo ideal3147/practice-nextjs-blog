@@ -11,7 +11,6 @@ export default function AccountForm({ user }: { user: User | null }) {
   const [fullname, setFullname] = useState<string | null>(null)
   const [username, setUsername] = useState<string | null>(null)
   const [website, setWebsite] = useState<string | null>(null)
-  const [avatar_url, setAvatarUrl] = useState<string | null>(null)
 
   const getProfile = useCallback(async () => {
     try {
@@ -32,9 +31,9 @@ export default function AccountForm({ user }: { user: User | null }) {
         setFullname(data.full_name)
         setUsername(data.username)
         setWebsite(data.website)
-        setAvatarUrl(data.avatar_url)
       }
     } catch (error) {
+      console.log('Error loading user data!', error)
       alert('Error loading user data!')
     } finally {
       setLoading(false)
@@ -71,6 +70,7 @@ export default function AccountForm({ user }: { user: User | null }) {
       alert('Profile updated!');
       window.location.href="/"
     } catch (error) {
+      console.log('Error updating the data!', error)
       alert('Error updating the data!')
       setLoading(false)
     }
@@ -83,12 +83,10 @@ export default function AccountForm({ user }: { user: User | null }) {
             uid={user?.id ?? null}
             url={user?.id ?? null}
             size={150}
-            onUpload={(url) => {
-            setAvatarUrl(url)
+            onUpload={() => {
             updateProfile({ fullname, username, website })
             }}
         />
-      {/* ... */}
 
       <div>
         <label htmlFor="email">Email</label>

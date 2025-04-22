@@ -11,7 +11,7 @@ const Pagination = ({ type, pages, currentPage = 1 }: PageProps) => {
   const pageLimit = 5;
 
   let startPage = Math.max(currentPage - Math.floor(pageLimit / 2), 1);
-  let endPage = Math.min(startPage + pageLimit - 1, totalPages);
+  const endPage = Math.min(startPage + pageLimit - 1, totalPages);
   if (endPage - startPage + 1 < pageLimit) {
     startPage = Math.max(endPage - pageLimit + 1, 1);
   }

@@ -2,7 +2,10 @@
 
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
-import { type BackButtonProps } from '@/app/lib/types/types'
+
+type BackButtonProps = {
+  href?: string; // 任意
+};
 
 export default function BackButton({ href }: BackButtonProps) {
   const router = useRouter();

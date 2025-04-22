@@ -9,6 +9,7 @@ import rehypeStringify from "rehype-stringify";
 import rehypeExternalLinks from "rehype-external-links";
 import { createClient } from "@/utils/supabase/server";
 import { v4 as uuidv4 } from "uuid";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 
 export async function GET(
@@ -130,7 +131,7 @@ export async function PUT(
     await uploadMarkdownFile(supabase, articleUuid, title, date, updatedContent, thumbnailUrl, tags);
 
     // Update database
-    await insertToDatabase(supabase, articleUuid, title, thumbnailUrl, imageInfoMap, date, tags);
+    await insertToDatabase(supabase, articleUuid, title, thumbnailUrl, imageInfoMap, tags);
 
     return NextResponse.json(
       {message: "記事が保存されました。" },
@@ -155,7 +156,7 @@ export async function PUT(
  */
 function extractFormData(formData: FormData) {
 
-  let tags = formData.get("tags") as string | null;
+  const tags = formData.get("tags") as string | null;
   // tagsをカンマで区切り、配列にする
   const tagArray = tags ? JSON.parse(tags) : null;
 
@@ -182,7 +183,7 @@ function extractFormData(formData: FormData) {
  * @returns A promise that resolves to the updated content with uploaded image references.
  */
 async function handleImages(
-  supabase: any,
+  supabase: SupabaseClient,
   formData: FormData,
   content: string,
   articleUuid: string
@@ -204,7 +205,7 @@ async function handleImages(
  * @param articleUuid - The unique identifier of the article whose images are being managed.
  * @throws {Error} If there is an issue fetching existing images or their URLs from the database.
  */
-async function deleteUnusedImages(supabase: any, content: string, articleUuid: string) {
+async function deleteUnusedImages(supabase: SupabaseClient, content: string, articleUuid: string) {
   const { data: existingImages, error: fetchError } = await supabase
     .from("c_article_images")
     .select("image_id")
@@ -215,7 +216,7 @@ async function deleteUnusedImages(supabase: any, content: string, articleUuid: s
   const { data: imageUrls, error: imageError } = await supabase
     .from("m_images")
     .select("image_id, file_url")
-    .in("image_id", existingImages.map((image: { image_id: any; }) => image.image_id));
+    .in("image_id", existingImages.map((image: { image_id: string; }) => image.image_id));
 
   if (imageError) throw new Error("画像URLを取得できませんでした。");
 
@@ -237,7 +238,7 @@ async function deleteUnusedImages(supabase: any, content: string, articleUuid: s
  * 
  * await deleteImagesFromStorageAndDatabase(supabase, deleteImageUrls);
  */
-async function deleteImagesFromStorageAndDatabase(supabase: any, deleteImageUrls: any[]) {
+async function deleteImagesFromStorageAndDatabase(supabase: SupabaseClient, deleteImageUrls: Array<{ image_id: string, file_url: string }>) {
   for (const image of deleteImageUrls) {
     const { error: storageError } = await supabase.storage
       .from("md-blog")
@@ -289,7 +290,7 @@ function extractImagesFromFormData(formData: FormData): Map<string, File> {
  * @returns A promise that resolves to the URL of the updated or existing thumbnail.
  */
 async function handleThumbnail(
-  supabase: any,
+  supabase: SupabaseClient,
   isThumbnailChange: string,
   thumbnail: File | null,
   articleUuid: string
@@ -309,7 +310,7 @@ async function handleThumbnail(
  * @param articleUuid - The unique identifier of the article whose thumbnail is to be deleted.
  * @throws {Error} Throws an error if the thumbnail could not be removed from storage.
  */
-async function deleteExistingThumbnail(supabase: any, articleUuid: string) {
+async function deleteExistingThumbnail(supabase: SupabaseClient, articleUuid: string) {
   const { error } = await supabase.storage
     .from("md-blog")
     .remove([`thumbnails/${articleUuid}.png`]);
@@ -326,7 +327,7 @@ async function deleteExistingThumbnail(supabase: any, articleUuid: string) {
  * @throws Will throw an error if the thumbnail is not provided or if the upload fails.
  */
 async function uploadNewThumbnail(
-  supabase: any,
+  supabase: SupabaseClient,
   thumbnail: File | null,
   articleUuid: string
 ): Promise<string> {
@@ -355,7 +356,7 @@ async function uploadNewThumbnail(
  * @returns A promise that resolves to the thumbnail URL as a string.
  * @throws An error if the thumbnail URL cannot be retrieved.
  */
-async function fetchExistingThumbnailUrl(supabase: any, articleUuid: string): Promise<string> {
+async function fetchExistingThumbnailUrl(supabase: SupabaseClient, articleUuid: string): Promise<string> {
   const { data, error } = await supabase
     .from("m_articles")
     .select("thumbnail_url")
@@ -406,7 +407,7 @@ export async function DELETE(
     const supabase = await createClient();
 
     // Helper function to handle errors
-    const handleError = (message: string, error: any) => {
+    const handleError = (message: string, error: Error) => {
       console.error(message, error.message);
       return NextResponse.json({ error: message }, { status: 500 });
     };
@@ -482,7 +483,7 @@ export async function DELETE(
 }
 
 async function uploadImages(
-  supabase: any,
+  supabase: SupabaseClient,
   images: Map<string, File>,
   content: string,
 ): Promise<{ imageURLInfo: Map<string, string>, articleContent: string; }>  {
@@ -538,7 +539,7 @@ function generateTimestamp(): string {
 
 // Markdownファイルをアップロード
 async function uploadMarkdownFile(
-  supabase: any,
+  supabase: SupabaseClient,
   uuid: string,
   title: string,
   timestamp: string,
@@ -571,12 +572,11 @@ ${content}
 
 // データベースに記事情報・画像情報を挿入
 async function insertToDatabase(
-  supabase: any,
+  supabase: SupabaseClient,
   articleUuid: string,
   title: string,
   thumbnailPublicUrl: string,
   imageMap: Map<string, string>,
-  date: any,
   tags: string[] | null
 ) {
 

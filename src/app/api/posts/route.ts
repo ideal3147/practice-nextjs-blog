@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { v4 as uuidv4 } from "uuid";
 import { generateTimestamp } from "@/utils/timestamp";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -54,13 +55,13 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("エラーが発生しました:", error);
     // supabase storageに保存した記事の削除処理を追加する
-    const { error: deleteError } = await supabase.storage
+    await supabase.storage
       .from("md-blog")
       .remove([`articles/${articleUuid}.md`, `thumbnails/${articleUuid}.png`]);
 
     // supabase databaseに保存した画像の削除処理を追加する
     for (const [uuid] of imageInfoMap.entries()) {
-      const { error: deleteImageError } = await supabase.storage
+      await supabase.storage
         .from("md-blog")
         .remove([`captures/${uuid}.png`]);
     }
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
 }
 
 // サムネイルをアップロード
-async function uploadThumbnail(supabase: any, uuid: string, thumbnail: File): Promise<string> {
+async function uploadThumbnail(supabase: SupabaseClient, uuid: string, thumbnail: File): Promise<string> {
   const { data, error: uploadError } = await supabase.storage
     .from("md-blog")
     .upload(`thumbnails/${uuid}.png`, thumbnail, {
@@ -105,7 +106,7 @@ async function uploadThumbnail(supabase: any, uuid: string, thumbnail: File): Pr
 
 // Markdownファイルをアップロード
 async function uploadMarkdownFile(
-  supabase: any,
+  supabase: SupabaseClient,
   uuid: string,
   title: string,
   timestamp: string,
@@ -138,7 +139,7 @@ ${content}
 
 // データベースに記事情報・画像情報を挿入
 async function insertToDatabase(
-  supabase: any,
+  supabase: SupabaseClient,
   articleUuid: string,
   title: string,
   thumbnailPublicUrl: string,
@@ -201,7 +202,7 @@ async function insertToDatabase(
  * @throws Will throw an error if `imageMap` is not a `Map` or if any image fails to upload.
  */
 async function uploadImages(
-  supabase: any,
+  supabase: SupabaseClient,
   images: Map<string, File>,
   content: string,
 ): Promise<{ imageURLInfo: Map<string, string>, articleContent: string; }>  {
