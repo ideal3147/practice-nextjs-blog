@@ -26,3 +26,16 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.prose table {
+  @apply w-full table-auto border-collapse;
+}
+
+.prose thead {
+  @apply bg-gray-100;
+}
+
+.prose th,
+.prose td {
+  @apply border px-4 py-2 text-left;
+}

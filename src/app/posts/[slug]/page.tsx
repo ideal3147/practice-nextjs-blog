@@ -6,14 +6,10 @@ import DeleteButton from "@/components/DeleteButton";
 import BackButton from "@/components/BackButton";
 import { createClient as createSupabaseDirectClient} from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/server";
-import { remark } from "remark";
-import html from "remark-html";
-import { rehype } from "rehype";
-import rehypeRaw from "rehype-raw";
-import rehypePrism from "rehype-prism-plus";
-import rehypeExternalLinks from "rehype-external-links";
-import rehypeStringify from "rehype-stringify";
 import matter from "gray-matter";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import Image from "next/image";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -46,19 +42,6 @@ export default async function Post({ params }: Props) {
   const fileContents = Buffer.from(fileBuffer).toString("utf-8");
   const { data: frontMatterData, content } = matter(fileContents);
 
-  // Markdown -> HTML
-  const processedContent = await remark().use(html).process(content);
-  const contentHtml = processedContent.toString();
-
-  // HTMLにRehype適用
-  const rehypedContent = await rehype()
-    .data("settings", { fragment: true })
-    .use(rehypeRaw)
-    .use(rehypePrism)
-    .use(rehypeExternalLinks, { target: "_blank", rel: ["nofollow"] })
-    .use(rehypeStringify)
-    .process(contentHtml);
-
   // サムネイル画像取得
   const { data: thumbnailData } = await supabase
     .from("m_articles")
@@ -80,8 +63,11 @@ export default async function Post({ params }: Props) {
 
       {image && (
         <div className="mb-6 rounded-lg shadow overflow-hidden">
-          <img
+          <Image
+            width={800}
+            height={400}
             src={image}
+            
             alt={frontMatterData.title}
             className="w-full h-64 object-cover"
           />
@@ -106,10 +92,11 @@ export default async function Post({ params }: Props) {
           ))}
       </div>
 
-      <div
-        className="prose prose-lg max-w-none"
-        dangerouslySetInnerHTML={{ __html: rehypedContent.value.toString() }}
-      ></div>
+      <div className="prose prose-lg max-w-none">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {content}
+        </ReactMarkdown>
+      </div>
     </div>
   );
 }
