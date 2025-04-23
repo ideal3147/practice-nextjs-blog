@@ -2,7 +2,8 @@
 
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@supabase/supabase-js';
-import { LogIn, LogOut, UserPlus } from 'lucide-react';
+// import { LogIn, LogOut, UserPlus } from 'lucide-react';
+import { LogIn, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -50,10 +51,10 @@ export default function SignInOrOutButton() {
           <LogIn size={18} />
           <span className="mx-1"/>
           <span>Sign In</span>
-          <span className="mx-2">/</span>
+          {/* <span className="mx-2">/</span>
           <UserPlus size={18} />
           <span className="mx-1"/>
-          <span>Sign Up</span>
+          <span>Sign Up</span> */}
         </>
       )}
     </button>
