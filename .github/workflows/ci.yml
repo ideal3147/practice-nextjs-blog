@@ -19,8 +19,11 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install
-
+        run: npm ci
+        
+      - name: Run Tailwind patch
+        run: npx tailwindcss patch
+        
       - name: Run ESLint
         run: npm run lint
 
