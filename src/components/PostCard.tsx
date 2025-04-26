@@ -3,6 +3,7 @@
 import { PostItem } from '@/app/lib/types/types';
 import { formatDate } from '@/utils/timestamp';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function PostCard({ post }: { post: PostItem }) {
   const router = useRouter();
@@ -24,7 +25,9 @@ export default function PostCard({ post }: { post: PostItem }) {
     >
       {/* サムネイル */}
       {post.image ? (
-        <img
+        <Image
+          height={200}
+          width={200}
           src={post.image}
           alt={post.title}
           className="w-full h-48 object-cover"
