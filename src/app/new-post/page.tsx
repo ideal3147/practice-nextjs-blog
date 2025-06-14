@@ -201,7 +201,9 @@ export default function NewPostPage() {
           {/* プレビューモード */}
           {mode === "preview" && (
             <div className="mb-6 border rounded-md p-4 bg-gray-50">
-              <div className="prose prose-blue max-w-none min-h-[200px] text-gray-800">
+              <div className="prose prose-blue max-w-none min-h-[200px] text-gray-800
+               [&_code]:bg-gray-200 [&_code]:px-1 [&_code]:rounded
+                [&_code::before]:content-none [&_code::after]:content-none">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeHighlight]}
