@@ -8,6 +8,7 @@ import { createClient as createSupabaseDirectClient} from "@supabase/supabase-js
 import { createClient } from "@/utils/supabase/server";
 import matter from "gray-matter";
 import ReactMarkdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import Image from "next/image";
 
@@ -93,7 +94,9 @@ export default async function Post({ params }: Props) {
       </div>
 
       <div className="prose prose-lg max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeHighlight]}>
           {content}
         </ReactMarkdown>
       </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
 import BackButton from "@/components/BackButton";
 
 type Props = {
@@ -209,6 +210,7 @@ export default function EditPost({ params }: Props) {
               <div className="prose prose-blue max-w-none min-h-[200px] text-gray-800">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
                   components={{
                     img: ({ ...props }) => {
                       const src = props.src?.startsWith("https") ? props.src : "blob:" + props.src;
