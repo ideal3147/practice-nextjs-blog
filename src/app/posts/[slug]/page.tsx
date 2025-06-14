@@ -93,7 +93,9 @@ export default async function Post({ params }: Props) {
           ))}
       </div>
 
-      <div className="prose prose-lg max-w-none">
+      <div className="prose prose-lg max-w-none
+        [&_code]:bg-gray-200 [&_code]:px-1 [&_code]:rounded
+        [&_code::before]:content-none [&_code::after]:content-none">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeHighlight]}>
