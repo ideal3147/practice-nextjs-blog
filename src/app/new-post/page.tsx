@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
 import BackButton from "@/components/BackButton";
 
 /**
@@ -203,6 +204,7 @@ export default function NewPostPage() {
               <div className="prose prose-blue max-w-none min-h-[200px] text-gray-800">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
                   components={{
                     img: ({ ...props }) => (
                       <img src={'blob:' + props.src} style={{ maxWidth: "50%" }} />
