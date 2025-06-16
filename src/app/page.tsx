@@ -25,31 +25,37 @@ export default async function Home() {
       </Link>
       <p className="text-center text-gray-500 text-lg mb-10">技術と日常を綴る個人ブログ</p>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* 左側：投稿一覧 */}
-        <div className="flex-1 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
-          {posts.slice(pageData.start, pageData.end).map((post) => (
-            <PostCard key={post.title} post={post} />
-          ))}
+      {/* コンテンツ */}
+      <div className="flex flex-col lg:flex-row gap-12">
+        {/* 投稿一覧 */}
+        <div className="flex-1 grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
+        {posts.slice(pageData.start, pageData.end).map((post) => (
+          <div key={post.title} className="rounded-lg shadow-md overflow-hidden h-[375px] flex flex-col">
+            <PostCard post={post} />
+          </div>
+        ))}
         </div>
 
-        {/* 右側：タグ一覧 */}
-        <div className="w-full lg:w-64">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700">📚 人気のタグ</h2>
-          <ul className="space-y-2">
-            {tagCounts.map(({ tag, count }) => (
-              <li key={tag}>
+        {/* タグ一覧（サイドバー） */}
+        <aside className="w-full lg:w-72">
+          <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">📚 人気のタグ</h2>
+            <ul className="space-y-3">
+              {tagCounts.map(({ tag, count }) => (
+                <li key={tag} className="flex items-center justify-between">
                 <Link
+                  key={tag}
                   href={`/tags/${tag}`}
-                  className="flex justify-between text-blue-600 hover:underline"
+                  className="bg-blue-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300"
                 >
-                  <span>{tag}</span>
-                  <span className="text-sm text-gray-500">{count}</span>
+                  <span>#{tag}</span>
                 </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+                <span className="text-sm text-gray-500">{count}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
       </div>
 
       <div className="mt-10 flex justify-center">
