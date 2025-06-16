@@ -4,6 +4,7 @@ import { PostItem } from '@/app/lib/types/types';
 import { formatDate } from '@/utils/timestamp';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Tag from './Tag';
 
 export default function PostCard({ post }: { post: PostItem }) {
   const router = useRouter();
@@ -54,13 +55,12 @@ export default function PostCard({ post }: { post: PostItem }) {
         {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-auto">
             {post.tags.map((tag, idx) => (
-              <div
+              <Tag
                 key={idx}
-                onClick={(e) => handleTagClick(e, tag)}
-                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hover:bg-blue-200 transition cursor-pointer"
-              >
-                #{tag}
-              </div>
+                name={tag}
+                clickable={false}
+                onClick={handleTagClick}
+              />
             ))}
           </div>
         )}

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Tag from './Tag';
 
 type TagCount = {
   tag: string;
@@ -13,13 +13,7 @@ export default function TagList({ tagCounts }: { tagCounts: TagCount[] }) {
         <ul className="space-y-3">
           {tagCounts.map(({ tag, count }) => (
             <li key={tag} className="flex items-center justify-between">
-              <Link
-                key={tag}
-                href={`/tags/${tag}`}
-                className="bg-blue-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300"
-              >
-                <span>#{tag}</span>
-              </Link>
+              <Tag name={tag} clickable />
               <span className="text-sm text-gray-500">{count}</span>
             </li>
           ))}
