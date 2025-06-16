@@ -92,5 +92,31 @@ const createPageData = (
   };
 };
 
-export { getPostData, getTagsData, createPageData };
+async function getTagCounts() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.
+  from('m_articles')
+  .select('tags');
+
+  if (error) {
+    console.error("タグの取得に失敗:", error);
+    return [];
+  }
+
+  const tagMap: Record<string, number> = {};
+
+  for (const row of data) {
+    const tags = row.tags || [];
+    for (const tag of tags) {
+      tagMap[tag] = (tagMap[tag] || 0) + 1;
+    }
+  }
+
+  return Object.entries(tagMap)
+    .sort((a, b) => b[1] - a[1]) // 出現回数で降順ソート
+    .map(([tag, count]) => ({ tag, count }));
+}
+
+export { getPostData, getTagsData, createPageData, getTagCounts };
 export type { PageData };

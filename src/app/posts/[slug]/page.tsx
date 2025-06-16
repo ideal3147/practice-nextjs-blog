@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import Tag from '../../../components/Tag';
 import { formatDate } from "@/utils/timestamp";
 import EditButton from "@/components/EditButton";
 import DeleteButton from "@/components/DeleteButton";
@@ -83,13 +83,7 @@ export default async function Post({ params }: Props) {
           .map((tag: string) => tag.trim())
           .filter((tag: string) => tag !== "")
           .map((tag: string) => (
-            <Link
-              key={tag}
-              href={`/tags/${tag}`}
-              className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-300"
-            >
-              #{tag}
-            </Link>
+            <Tag key={tag} name={tag} clickable />
           ))}
       </div>
 
