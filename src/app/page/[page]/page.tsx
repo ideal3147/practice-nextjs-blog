@@ -1,6 +1,7 @@
 import PostCard from "../../../components/PostCard";
 import Pagination from "../../../components/Pagination";
-import { PageData, createPageData, getPostData } from "../../lib/functions";
+import TagList from "../../../components/TagList";
+import { PageData, createPageData, getPostData, getTagCounts } from "../../lib/functions";
 import Link from "next/link";
 import SignInOrOutButton from "@/components/SignInOrOutButton";
 import UserAvatar from "@/components/UserAvatar";
@@ -15,14 +16,16 @@ import NewPostButton from "@/components/NewPostButton";
 export default async function Page(props: { params: Promise<{ page: number }> }) {
   const params = await props.params;
   const posts = await getPostData();
-
+  const tagCounts = await getTagCounts();
   const pageData: PageData = createPageData(params.page, posts.length);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
 
+    <div className="flex justify-end items-center gap-4 mb-6">
       <UserAvatar/>
       <SignInOrOutButton /> 
+    </div>
       
       {/* タイトル */}
       <Link href="/" className="block mb-6 text-center">
@@ -30,11 +33,19 @@ export default async function Page(props: { params: Promise<{ page: number }> })
       </Link>
       <p className="text-center text-gray-500 text-lg mb-10">技術と日常を綴る個人ブログ</p>
 
-      {/* 投稿一覧（レスポンシブGrid） */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      {/* コンテンツ */}
+      <div className="flex flex-col lg:flex-row gap-12">
+        {/* 投稿一覧 */}
+        <div className="flex-1 grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2">
         {posts.slice(pageData.start, pageData.end).map((post) => (
-          <PostCard key={post.title} post={post} />
+          <div key={post.title} className="rounded-lg shadow-md overflow-hidden h-[375px] flex flex-col">
+            <PostCard post={post} />
+          </div>
         ))}
+        </div>
+
+        {/* タグ一覧（サイドバー） */}
+        <TagList tagCounts={tagCounts} />
       </div>
 
       <div className="mt-10 flex justify-center">
