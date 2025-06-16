@@ -93,7 +93,7 @@ const createPageData = (
 };
 
 async function getTagCounts() {
-  const supabase = await createClient(); // 必要なら自分の createClient 関数を使用
+  const supabase = await createClient();
 
   const { data, error } = await supabase.
   from('m_articles')
